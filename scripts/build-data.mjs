@@ -210,7 +210,15 @@ try {
   for (const f of ne.features) {
     const a3 = f.properties.ADM0_A3;
     if (!['SWE', 'NOR'].includes(a3)) continue; // keep the map calm: only the Nordic comparators
-    context.push({ type: 'Feature', geometry: simplifyGeometry(f.geometry), properties: { kind: 'country', id: a3, name: f.properties.NAME_EN || f.properties.NAME } });
+    const geom = simplifyGeometry(f.geometry);
+    // mainland only: drop Svalbard, Bear Island and Jan Mayen (they float at the top of the map)
+    geom.coordinates = geom.coordinates.filter((poly) => {
+      const r = poly[0];
+      const lat = r.reduce((s, c) => s + c[1], 0) / r.length;
+      const lon = r.reduce((s, c) => s + c[0], 0) / r.length;
+      return lat < 71.3 && lon > 4.5;
+    });
+    context.push({ type: 'Feature', geometry: geom, properties: { kind: 'country', id: a3, name: f.properties.NAME_EN || f.properties.NAME } });
   }
 } catch {
   console.warn('! Natural Earth countries not found in data/raw — run fetch-data.mjs');

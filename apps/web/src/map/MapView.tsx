@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DeckGL } from '@deck.gl/react';
-import { ArcLayer, GeoJsonLayer, PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 import { TripsLayer } from '@deck.gl/geo-layers';
 import { AmbientLight, DirectionalLight, FlyToInterpolator, LightingEffect, type MapViewState, type PickingInfo } from '@deck.gl/core';
 import { phaseMeans, resolveProfile, sumPhases, type PhaseId, type RegionResult } from '@polku/sim';
 import { model, useSim } from '../state/sim';
-import { useStore, type MapMetric } from '../state/store';
+import { useLensProfile, useStore, type MapMetric } from '../state/store';
 import { DAYS_RAMP, GAP_RAMP, ramp, type RGB } from './colors';
 import { buildTrips, LOOP } from './flows';
 import { outerRings, useGeo, type Position } from './geo';
@@ -39,8 +39,6 @@ export function metricSpec(metric: MapMetric, phase: PhaseId | 'ALL'): MetricSpe
   switch (metric) {
     case 'gap':
       return { value: (r) => r.equityGapDays, scale: 900, ramp: GAP_RAMP, unit: 'days', label: 'Equity gap (days)' };
-    case 'lost':
-      return { value: (r) => r.patientDaysLostPerYear, scale: 22, ramp: DAYS_RAMP, unit: 'patient-days/yr', label: 'Patient-days lost per year' };
     default:
       return phaseIdx < 0
         ? { value: (r) => r.totalMeanDays, scale: RAISE_PER_DAY, ramp: DAYS_RAMP, unit: 'days', label: 'Days from first symptom to treatment' }
@@ -66,27 +64,33 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
   const raised = useStore((s) => s.selectedRegion);
   const selectRegion = useStore((s) => s.selectRegion);
   const interventions = useStore((s) => s.interventions);
-  const lens = useStore((s) => s.lens);
-  const lensProfile = useStore((s) => (s.lens === 'A' ? s.profileA : s.profileB));
-  const showFlows = useStore((s) => s.showFlows);
+  const step = useStore((s) => s.step);
+  const profileA = useStore((s) => s.profileA);
+  const profileB = useStore((s) => s.profileB);
+  const lensProfile = useLensProfile();
+  const lensName = mode === 'sim' ? 'your patient' : 'Matti B';
+  const reduceMotion = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, []);
+  const showFlows = !reduceMotion;
+  const dur = (ms: number) => (reduceMotion ? 0 : ms);
 
-  const [viewState, setViewState] = useState<MapViewState>(INTRO);
+  const [viewState, setViewState] = useState<MapViewState>(reduceMotion ? OVERVIEW : INTRO);
   const [time, setTime] = useState(0);
   const [hover, setHover] = useState<string | null>(null);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const t = setTimeout(
       () => setViewState({ ...OVERVIEW, transitionDuration: 2600, transitionInterpolator: new FlyToInterpolator({ speed: 0.9 }) } as MapViewState),
       200,
     );
     return () => clearTimeout(t);
-  }, []);
+  }, [reduceMotion]);
 
   // Camera follows the raised region
   useEffect(() => {
     if (!geo) return;
     if (!raised) {
-      setViewState((v) => ({ ...v, ...OVERVIEW, transitionDuration: 1500, transitionInterpolator: new FlyToInterpolator() } as MapViewState));
+      setViewState((v) => ({ ...v, ...OVERVIEW, transitionDuration: dur(1500), transitionInterpolator: new FlyToInterpolator() } as MapViewState));
       return;
     }
     const f = geo.regions.find((r) => r.properties.id === raised);
@@ -96,12 +100,14 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     // keep the region slightly right of centre so the story card on the left never covers it
     setViewState((v) => ({
       ...v, longitude: lon - (zoom < 6 ? 3.4 : 1.2), latitude: lat - (zoom < 6 ? 0.2 : 0.3), zoom, pitch: 46, bearing: -10,
-      transitionDuration: 1800, transitionInterpolator: new FlyToInterpolator({ speed: 1.1 }),
+      transitionDuration: dur(1800), transitionInterpolator: new FlyToInterpolator({ speed: 1.1 }),
     } as MapViewState));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raised, geo]);
 
   // Animation clock (journeys + breathing halo)
   useEffect(() => {
+    if (reduceMotion) return;
     let raf = 0;
     let last = performance.now();
     const tick = (now: number) => {
@@ -112,7 +118,7 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [reduceMotion]);
 
   const spec = useMemo(() => metricSpec(metric, phase), [metric, phase]);
   const patientMode = metric === 'patient';
@@ -134,17 +140,21 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo, lensProfile, interventions, phase]);
-  const muniDomain = useMemo(
-    () => (geo ? domainOf(geo.municipalities.map((m) => muniValue(m, []))) : ([0, 1] as [number, number])),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [geo, lensProfile, phase],
-  );
+  /** Fixed colour scale from the best-placed (Matti A) to the worst-placed (Matti B) patient, so improvements visibly turn green. */
+  const muniDomain = useMemo(() => {
+    if (!geo) return [0, 1] as [number, number];
+    const val = (p: typeof profileA) => (m: (typeof geo.municipalities)[number]) => {
+      const pm = phaseMeans(model, resolveProfile(model, { ...p, regionId: m.properties.regionId, distanceKm: m.properties.distCentralKm }), []);
+      return phase === 'ALL' ? sumPhases(pm.mean) : pm.mean[phase];
+    };
+    return domainOf([...geo.municipalities.map(val(profileA)), ...geo.municipalities.map(val(profileB))]);
+  }, [geo, profileA, profileB, phase]);
   const muniScale = phase === 'ALL' ? RAISE_PER_DAY : RAISE_PER_DAY_PHASE;
 
   const domain = patientMode ? muniDomain : regionDomain;
   useEffect(
-    () => onDomain?.({ domain, spec: patientMode ? { ...spec, label: `Days to treatment for Matti ${lens}, if he lived here` } : spec }),
-    [domain, spec, patientMode, lens, onDomain],
+    () => onDomain?.({ domain, spec: patientMode ? { ...spec, label: `Days to treatment for ${lensName} if living in each municipality` } : { ...spec, label: 'Average days from first symptom to treatment, by region' } }),
+    [domain, spec, patientMode, lensName, onDomain],
   );
 
   const colorFor = (v: number): RGB => ramp(spec.ramp, (v - domain[0]) / (domain[1] - domain[0]));
@@ -171,23 +181,15 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo, raised, hospitalPos, patientMode, muniDays, sim.byId, spec]);
 
-  const rtArcs = useMemo(() => {
-    const rt = hospitals.filter((h) => h.hasRadiotherapy === true);
-    return hospitals
-      .filter((h) => h.hasRadiotherapy !== true)
-      .map((h) => {
-        let best = rt[0];
-        let bd = Infinity;
-        for (const c of rt) {
-          const d = Math.hypot((c.lon - h.lon) * 0.5, c.lat - h.lat);
-          if (d < bd) {
-            bd = d;
-            best = c;
-          }
-        }
-        return { from: h, to: best };
-      });
-  }, [hospitals]);
+  const extremes = useMemo(() => {
+    if (!geo) return [];
+    const sorted = [...sim.base].sort((a, b) => b.totalMeanDays - a.totalMeanDays);
+    const pick = (r: RegionResult, color: [number, number, number, number], tag: string) => {
+      const f = geo.regions.find((x) => x.properties.id === r.regionId)!;
+      return { pos: f.properties.centroid, color, text: `${tag}: ${shortName(r.nameEn)} · ${Math.round(r.totalMeanDays)} days` };
+    };
+    return [pick(sorted[0], [251, 113, 133, 255], 'Slowest'), pick(sorted[sorted.length - 1], [45, 212, 191, 255], 'Fastest')];
+  }, [geo, sim.base]);
 
   const raisedFeature = useMemo(() => (geo && raised ? geo.regions.find((r) => r.properties.id === raised) : undefined), [geo, raised]);
   const raisedRings = useMemo(() => (raisedFeature ? outerRings(raisedFeature.geometry) : []), [raisedFeature]);
@@ -278,16 +280,39 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
         widthMinPixels: 2,
         updateTriggers: { getPath: [sim.current, spec, patientMode, raised] },
       }),
-    mode === 'explore' &&
-      new ArcLayer({
-        id: 'rt-arcs',
-        data: rtArcs,
-        getSourcePosition: (d: any) => [d.from.lon, d.from.lat, 0],
-        getTargetPosition: (d: any) => [d.to.lon, d.to.lat, 0],
-        getSourceColor: [96, 165, 250, 30],
-        getTargetColor: [167, 139, 250, 120],
-        getWidth: 1.2,
-        getHeight: 0.5,
+    // Tour step 1: point the eye at the slowest and the fastest region (dot first, label on top of it)
+    mode === 'tour' &&
+      step === 0 &&
+      new ScatterplotLayer({
+        id: 'extremes-dots',
+        data: extremes,
+        getPosition: (d: any) => d.pos,
+        getRadius: 6,
+        radiusUnits: 'pixels',
+        getFillColor: (d: any) => d.color,
+        stroked: true,
+        getLineColor: [5, 9, 18, 255],
+        lineWidthMinPixels: 2,
+      }),
+    mode === 'tour' &&
+      step === 0 &&
+      new TextLayer({
+        id: 'extremes',
+        data: extremes,
+        getPosition: (d: any) => d.pos,
+        getText: (d: any) => d.text,
+        getSize: 14,
+        getColor: (d: any) => d.color,
+        fontFamily: '"Inter Variable", Inter, system-ui, sans-serif',
+        fontWeight: 700,
+        characterSet: 'auto',
+        background: true,
+        getBackgroundColor: [7, 11, 20, 215],
+        getBorderColor: (d: any) => d.color,
+        getBorderWidth: 1.5,
+        backgroundPadding: [8, 5, 8, 5],
+        getTextAnchor: 'start',
+        getPixelOffset: [24, 0],
       }),
     showFlows &&
       trips.length > 0 &&
@@ -368,7 +393,7 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
         getCursor={({ isHovering, isDragging }) => (isDragging ? 'grabbing' : isHovering ? 'pointer' : 'grab')}
         style={{ background: 'transparent' }}
       />
-      {hover && <Tooltip id={hover} geo={geo} muniDays={muniDays} spec={spec} lens={lens} />}
+      {hover && <Tooltip id={hover} geo={geo} muniDays={muniDays} spec={spec} lens={lensName} />}
     </div>
   );
 }
@@ -393,7 +418,7 @@ function Tooltip({ id, geo, muniDays, spec, lens }: { id: string; geo: NonNullab
         <div className="tt-title">{m.properties.name}</div>
         <div className="tt-sub">{m.properties.distCentralKm} km to hospital</div>
         <div className="tt-big">
-          {Math.round(muniDays.get(m.properties.code) ?? 0)} <span>days for Matti {lens}</span>
+          {Math.round(muniDays.get(m.properties.code) ?? 0)} <span>days for {lens}</span>
         </div>
         <div className="tt-est">Estimate</div>
       </div>
