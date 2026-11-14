@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { compareProfiles, interventionFromAi, registerIntervention, type AiEstimate } from '@polku/sim';
+import { interventionFromAi, profileTotal, registerIntervention, type AiEstimate } from '@polku/sim';
 import { designAction, type DesignReply } from '../state/api';
 import { model } from '../state/sim';
 import { useStore } from '../state/store';
@@ -35,7 +35,7 @@ export const plainText = (t: string) =>
       return `(national ${doc.toLowerCase()}, page${ps.length > 1 ? 's' : ''} ${ps.join(' and ')})`;
     })
     // source ids are listed in the sources panel; in the sentence they are noise
-    .replace(/\s*\((?:S\d{2}(?:[,;]\s*)?)+\)/g, '')
+    .replace(/\s*[([](?:S\d{2}(?:[,;]\s*)?)+[)\]]/g, '')
     .replace(/,?\s*\bS\d{2}\b/g, '')
     // phase codes → words
     .replace(/\bP3\s*[-–]\s*P5\b/g, 'referral-to-treatment')
@@ -102,7 +102,7 @@ const IDEAS = [
 /** Type an idea → the AI estimates it from the evidence → the simulator computes the days → add it to the plan. */
 export function DesignBox({ regionId, autoRun = false, compact = false }: { regionId: string; autoRun?: boolean; compact?: boolean }) {
   const profileA = useStore((s) => s.profileA);
-  const profileB = useStore((s) => s.profileB);
+  const patient = useStore((s) => s.patient);
   const active = useStore((s) => s.interventions);
   const set = useStore((s) => s.set);
   const customActions = useStore((s) => s.customActions);
@@ -120,7 +120,7 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
     setError(null);
     setReply(null);
     try {
-      const r = await designAction(text.trim(), regionId, profileA, profileB);
+      const r = await designAction(text.trim(), regionId, profileA, patient);
       registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
       setReply(r);
     } catch (e: any) {
@@ -139,8 +139,8 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
   }, [autoRun]);
 
   const id = reply?.estimate.id;
-  // Patient B before/after computed here with the same engine and rounding as the rest of the page
-  const matti = useMemo(() => (reply ? { before: compareProfiles(model, profileA, profileB, []).b.totalMeanDays, after: compareProfiles(model, profileA, profileB, [reply.estimate.id]).b.totalMeanDays } : null), [reply, profileA, profileB]);
+  // before/after for the patient being simulated, computed here with the same engine and rounding as the rest of the page
+  const matti = useMemo(() => (reply ? { before: profileTotal(model, patient), after: profileTotal(model, patient, [reply.estimate.id]) } : null), [reply, patient]);
   const on = !!id && active.includes(id);
   const toggle = () => {
     if (!id) return;
@@ -192,7 +192,7 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
           <p className="design-why">{plainText(reply.estimate.rationale)}</p>
           <div className="design-numbers">
             <div>
-              <span>Patient B</span>
+              <span>This patient</span>
               <b>
                 {d0(matti?.before ?? reply.results.mattiB.before)} → {d0(matti?.after ?? reply.results.mattiB.after)} days
               </b>

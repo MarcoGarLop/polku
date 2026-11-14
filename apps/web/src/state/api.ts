@@ -71,3 +71,29 @@ export async function askAgent(
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`);
   return r.json();
 }
+
+export interface NordicReply {
+  practiceId: string;
+  country: string;
+  name: string;
+  whatTheyDid: string;
+  resultsThere: string[];
+  whyDifferent: string;
+  estimate: AiEstimate;
+  unverified: string[];
+  model: string;
+  ms: number;
+  cached?: boolean;
+}
+
+/** The AI compares a Nordic practice: what it achieved there, and its estimated effect in Finland. */
+export async function compareNordic(practiceId: string): Promise<NordicReply> {
+  const r = await fetch('/api/nordic', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ practiceId }),
+    signal: AbortSignal.timeout(110000),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`);
+  return r.json();
+}

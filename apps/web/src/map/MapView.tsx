@@ -64,11 +64,10 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
   const raised = useStore((s) => s.selectedRegion);
   const selectRegion = useStore((s) => s.selectRegion);
   const interventions = useStore((s) => s.interventions);
-  const step = useStore((s) => s.step);
   const profileA = useStore((s) => s.profileA);
   const profileB = useStore((s) => s.profileB);
   const lensProfile = useLensProfile();
-  const lensName = mode === 'sim' ? 'your patient' : 'Patient B';
+  const lensName = 'this patient';
   const reduceMotion = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, []);
   const showFlows = !reduceMotion;
   const dur = (ms: number) => (reduceMotion ? 0 : ms);

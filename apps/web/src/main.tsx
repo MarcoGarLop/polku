@@ -5,6 +5,7 @@ import './styles.css';
 import './styles-v3.css';
 import './styles-ai.css';
 import './styles-intro.css';
+import './styles-sim.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(

@@ -428,3 +428,57 @@ export function findLeftBehind(model: Model, regionId: string, interventions: st
   }
   return top;
 }
+
+/* ------------------------------------------------------------------ */
+/* Build-up: how a patient's days add up, one factor at a time          */
+/* ------------------------------------------------------------------ */
+
+export interface PartialProfile {
+  regionId: string;
+  distanceKm?: number;
+  route?: RouteId;
+  education?: EducationId;
+  navigationBarrier?: boolean;
+}
+
+/** Expected total days when some attributes are unknown: averages over the region's patient mix. */
+export function expectedTotal(model: Model, p: PartialProfile, interventions: string[] = [], level: EffectLevel = 'mid'): number {
+  const r = model.byId.get(p.regionId);
+  if (!r) throw new Error(`Unknown region: ${p.regionId}`);
+  const P = model.params;
+  const routes: [RouteId, number][] = p.route ? [[p.route, 1]] : [['public', 1 - r.shareOcc], ['occupational_private', r.shareOcc]];
+  const edus: [EducationId, number][] = p.education ? [[p.education, 1]] : P.education.map((e) => [e.id, e.share] as [EducationId, number]);
+  const navs: [boolean, number][] = p.navigationBarrier != null ? [[p.navigationBarrier, 1]] : [[false, 1 - r.shareNav], [true, r.shareNav]];
+  let total = 0;
+  for (const [route, wr] of routes)
+    for (const [education, we] of edus)
+      for (const [navigationBarrier, wn] of navs)
+        total += wr * we * wn * profileTotal(model, { regionId: p.regionId, route, education, navigationBarrier, distanceKm: p.distanceKm ?? r.kmCentral }, interventions, level);
+  return total;
+}
+
+export type BuildUpKey = 'national' | 'region' | 'distance' | 'route' | 'education' | 'support';
+export interface BuildUpStep {
+  key: BuildUpKey;
+  /** Running total after this factor is known. */
+  total: number;
+  /** Days this factor adds (negative = saves) compared with the previous line. */
+  delta: number;
+}
+
+/**
+ * The patient's days as a running sum: Finland's average, then what their region, distance, entry route,
+ * education and support each add. The last line equals the patient's own total.
+ */
+export function profileBuildUp(model: Model, profile: PatientProfile, interventions: string[] = []): BuildUpStep[] {
+  const p = resolveProfile(model, profile);
+  const totals: [BuildUpKey, number][] = [
+    ['national', nationalMeanTotal(model, interventions)],
+    ['region', expectedTotal(model, { regionId: p.regionId }, interventions)],
+    ['distance', expectedTotal(model, { regionId: p.regionId, distanceKm: p.distanceKm }, interventions)],
+    ['route', expectedTotal(model, { regionId: p.regionId, distanceKm: p.distanceKm, route: p.route }, interventions)],
+    ['education', expectedTotal(model, { regionId: p.regionId, distanceKm: p.distanceKm, route: p.route, education: p.education }, interventions)],
+    ['support', profileTotal(model, p, interventions)],
+  ];
+  return totals.map(([key, total], i) => ({ key, total, delta: i === 0 ? 0 : total - totals[i - 1][1] }));
+}

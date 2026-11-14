@@ -18,6 +18,8 @@ import {
   simulateRegion,
   registerIntervention,
   interventionFromAi,
+  profileBuildUp,
+  profileTotal,
   type PatientProfile,
 } from '../src';
 import { loadDefaultModel } from '../src/data';
@@ -207,5 +209,18 @@ describe('patient-days lost', () => {
     const tp = withActions.reduce((s, r) => s + r.population, 0);
     const mean = withActions.reduce((s, r) => s + r.population * r.totalMeanDays, 0) / tp;
     expect(Math.abs(mean - nationalMeanTotal(model, ivs))).toBeLessThan(0.5);
+  });
+});
+
+describe('build-up', () => {
+  it('adds up from the national average to the patient total', () => {
+    const model = loadDefaultModel();
+    const p = { regionId: 'lappi', route: 'public', education: 'basic', navigationBarrier: true, distanceKm: 180 } as const;
+    const steps = profileBuildUp(model, p);
+    expect(steps[0].key).toBe('national');
+    expect(steps.at(-1)!.total).toBeCloseTo(profileTotal(model, p), 6);
+    const sum = steps.reduce((s, x) => s + x.delta, steps[0].total);
+    expect(sum).toBeCloseTo(steps.at(-1)!.total, 6);
+    expect(steps.find((s) => s.key === 'route')!.delta).toBeGreaterThan(0);
   });
 });

@@ -1,0 +1,74 @@
+/* =====================================================================
+   Simulator by sections
+   ===================================================================== */
+.sim-panel { width: 440px; display: flex; flex-direction: column; padding: 0; overflow: hidden; max-height: calc(100vh - 92px); }
+.sec-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px; border-bottom: 1px solid var(--line); }
+.sec-tab { border: 0; background: transparent; color: var(--muted); border-radius: 9px; padding: 7px 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; line-height: 1.2; text-align: center; }
+.sec-tab:hover { color: var(--text); }
+.sec-tab.on { background: rgba(148, 163, 184, 0.12); color: var(--text); }
+.sec-n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; border: 1.5px solid var(--line-2); }
+.sec-tab.on .sec-n { background: var(--teal); color: #04121a; border-color: transparent; }
+.sec-tab.done .sec-n { background: rgba(45, 212, 191, 0.2); color: var(--teal); border-color: transparent; }
+.sec-title { font-size: 20px; margin: 14px 18px 4px; letter-spacing: -0.01em; }
+.sec-body { flex: 1; overflow-y: auto; padding: 4px 18px 12px; scrollbar-width: thin; animation: slideIn 0.3s ease both; }
+.sec-intro { font-size: 13.5px; line-height: 1.5; color: #c6d2e4; margin: 4px 0 12px; }
+.sec-nav { display: flex; justify-content: space-between; gap: 8px; padding: 12px 18px 14px; border-top: 1px solid var(--line); }
+.presets { gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+
+/* a question about the patient */
+.factor { padding: 11px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(148, 163, 184, 0.04); margin-bottom: 8px; }
+.factor-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 7px; font-size: 14px; }
+.factor select { width: 100%; font-size: 13.5px; padding: 7px 8px; }
+.factor input[type='range'] { width: 100%; }
+.factor .hint { display: block; font-size: 12px; color: var(--faint); margin-top: 4px; }
+.factor-why { font-size: 12.5px; line-height: 1.45; color: var(--muted); margin: 7px 0 0; }
+.delta { font-size: 13.5px; font-weight: 800; color: var(--muted); white-space: nowrap; }
+.delta.up { color: #fb7185; }
+.delta.down { color: var(--good); }
+
+.switch-effect-line { font-size: 12.5px; color: #c6d2e4; margin-top: 4px; }
+.switch-effect-line b { color: var(--good); }
+.act-wrap.recommended .switch-row { border-color: rgba(167, 139, 250, 0.45); }
+.list-sep { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); margin: 14px 0 8px; }
+
+/* Nordic practices */
+.nordic-grid { display: grid; gap: 7px; }
+.nordic { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(148, 163, 184, 0.04); color: var(--text); cursor: pointer; font-size: 13.5px; }
+.nordic:hover:not(:disabled) { border-color: var(--line-2); }
+.nordic.on { border-color: rgba(96, 165, 250, 0.6); background: rgba(96, 165, 250, 0.08); }
+.nordic:disabled { opacity: 0.55; cursor: default; }
+.nordic-flag { font-size: 22px; }
+.nordic-line { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+.nordic-result { margin-top: 12px; padding: 12px; border-radius: 12px; border: 1px solid rgba(96, 165, 250, 0.4); background: linear-gradient(160deg, rgba(96, 165, 250, 0.09), rgba(45, 212, 191, 0.04)); }
+.nordic-what { font-size: 13.5px; line-height: 1.5; margin: 0 0 10px; }
+.there-here { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.there-here > div { padding: 10px; border-radius: 10px; background: rgba(5, 9, 18, 0.35); }
+.th-label { font-size: 12px; font-weight: 800; color: #93c5fd; margin-bottom: 6px; }
+.there-here ul { margin: 0; padding-left: 16px; font-size: 12.5px; line-height: 1.45; color: #c6d2e4; }
+.there-here li { margin-bottom: 4px; }
+.th-big { font-size: 26px; font-weight: 800; color: var(--good); letter-spacing: -0.02em; }
+
+/* result: running sum + Nordic benchmark */
+.sim-result { width: 370px; max-height: calc(100vh - 92px); overflow-y: auto; scrollbar-width: thin; }
+.big-num > span:first-of-type { font-size: 14px; }
+.buildup { margin-top: 12px; border-radius: 12px; background: rgba(148, 163, 184, 0.05); padding: 6px 12px; }
+.bu-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; padding: 6px 0; border-bottom: 1px dashed rgba(148, 163, 184, 0.15); }
+.bu-row b { white-space: nowrap; }
+.bu-row b.up { color: #fb7185; }
+.bu-row b.down { color: var(--good); }
+.bu-row.first span { color: var(--muted); }
+.bu-row.total { border-bottom: 0; border-top: 1px solid var(--line-2); margin-top: 2px; font-size: 15px; font-weight: 800; }
+.bench { margin-top: 14px; }
+.bench-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); }
+.ruler { position: relative; height: 70px; margin: 10px 6px 4px; }
+.ruler-track { position: absolute; left: 0; right: 0; top: 18px; height: 6px; border-radius: 4px; background: linear-gradient(90deg, #2dd4bf, #facc15 50%, #f43f5e); opacity: 0.55; }
+.mark { position: absolute; top: 10px; transform: translateX(-50%); text-align: center; font-size: 11.5px; line-height: 1.2; color: var(--muted); white-space: nowrap; }
+.mark i { display: block; width: 2px; height: 22px; margin: 0 auto 4px; background: currentColor; }
+.mark.dk { color: #5eead4; }
+.mark.se { color: #93c5fd; }
+.mark.fi { color: #cbd5e1; }
+.patient-dot { position: absolute; top: 11px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: #fb7185; border: 3px solid #050912; box-shadow: 0 0 0 2px #fb7185; transition: left 0.6s cubic-bezier(.2,.8,.2,1); }
+.patient-dot.ghost { opacity: 0.35; box-shadow: none; }
+.bench-note { font-size: 12.5px; color: #c6d2e4; line-height: 1.45; margin-top: 6px; }
+
+@media (max-width: 1360px) { .sim-panel { width: 400px; } .sim-result { width: 330px; } }

@@ -14,12 +14,16 @@ In our model, a working patient near Oulu University Hospital starts lung cancer
 
 ## What you can do
 
-| Mode | What it shows |
-|---|---|
-| **Guided tour** (7 steps) | The gap → two patients → where in the pathway → why (interactive “what if”) → the AI's recommended actions → your own idea, estimated live by the AI → how far you can trust it |
-| **Simulator** | Build a patient (region, distance, entry route, education, living alone / 75+), switch actions on, design new actions with the AI, see the days and the comparison with Sweden and Denmark |
-| **Ask the AI** | Free questions; the AI runs the simulator, cites the roadmap page, and every number in its answer is checked |
-| **1-page plan** | A printable action plan for a county, in English or Finnish |
+The simulator works one section at a time, with the patient's days and a Nordic benchmark always visible:
+
+| Section | What you do | What the AI does |
+|---|---|---|
+| **1 · The patient** | Where they live, distance to hospital, entry route, education, support | Each choice shows how many days it adds or saves, and why (a running sum from Finland's average to this patient) |
+| **2 · Actions in the region** | Switch actions from the national roadmap on and off | Gemini estimated each action from the evidence; the best combination for the county is recommended first, with its reasoning |
+| **3 · Your own idea** | Describe any action in plain words | Gemini estimates what it would change, matches it to the roadmap and says when an idea is unlikely to help |
+| **4 · Learn from the Nordics** | Pick a Danish, Norwegian or Swedish practice | Gemini summarises what it achieved there (evidence only) and estimates its effect in the chosen Finnish county, for this patient |
+
+Also: **Ask the AI** (free questions; every number in the answer is checked) and a **1-page plan** for the county in English or Finnish.
 
 ## How the AI works
 
@@ -73,7 +77,7 @@ npm run dev:server            # API on :8787 (warms the Gemini context on start)
 npm run dev:web               # app on http://localhost:5173
 ```
 
-- Without a Gemini key the app still works: the tour, simulator and map run fully in the browser, and recorded AI answers ([`demo/`](demo/)) are served when `DEMO_MODE=true`.
+- Without a Gemini key the app still works: the simulator and map run fully in the browser, and recorded AI answers ([`demo/`](demo/)) are served when `DEMO_MODE=true`.
 - Rebuild the public data: `npm run data` (downloads from Statistics Finland and THL Sotkanet).
 - Re-run the AI estimation of action effects: `cd apps/server && node --env-file=../../.env --import tsx src/estimate-all.ts`
 - Tests: `npm test` (simulation engine: calibration, Shapley attribution, interventions, AI effects).
@@ -81,8 +85,8 @@ npm run dev:web               # app on http://localhost:5173
 ## Repository
 
 ```
-apps/web        Vite + React + deck.gl: 3D map, guided tour, simulator
-apps/server     Node + @google/genai: agent, effect estimation, design-an-action, plan
+apps/web        Vite + React + deck.gl: 3D map and the simulator
+apps/server     Node + @google/genai: agent, effect estimation, design-an-action, Nordic comparison, plan
 packages/sim    Pathway simulator (TypeScript, shared by browser and server) + tests
 data/           seed parameters, AI effect estimates, processed public data
 scripts/        fetch and build public data

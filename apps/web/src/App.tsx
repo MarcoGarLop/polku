@@ -3,7 +3,6 @@ import { MapView, metricSpec, type MetricSpec } from './map/MapView';
 import { SimProvider } from './state/sim';
 import { useStore } from './state/store';
 import { Header, Legend, RegionTable, Welcome } from './components/Overlays';
-import { Tour } from './components/Tour';
 import { SimulatorPanel, SimulatorResult } from './components/Simulator';
 import { AskDrawer } from './components/AskPanel';
 import { Assumptions } from './components/Assumptions';
@@ -32,7 +31,6 @@ export default function App() {
         <main id="main-content">
           <SafeBoundary label="This view" key={mode}>
             {mode === 'welcome' && <Welcome />}
-            {mode === 'tour' && <Tour />}
             {mode === 'sim' && (
               <>
                 <SimulatorPanel />

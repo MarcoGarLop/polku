@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
 import { create } from 'zustand';
 import type { PatientProfile, PhaseId } from '@polku/sim';
 
 export type MapMetric = 'days' | 'gap' | 'patient';
-export type Mode = 'welcome' | 'tour' | 'sim';
+export type Mode = 'welcome' | 'sim';
 
+/** Example patients (used as presets and for the AI's comparison questions). */
 export const MATTI_A: PatientProfile = {
   regionId: 'pohjois-pohjanmaa',
   route: 'occupational_private',
@@ -20,42 +20,17 @@ export const MATTI_B: PatientProfile = {
   distanceKm: 180,
 };
 
-/**
- * The guided tour follows exactly what the AstraZeneca challenge asks:
- * identify the gap → locate it in the pathway → explain it → recommend actions → AI analyst → trust the data.
- */
-export const TOUR_STEPS = [
-  { id: 'gap', label: 'The gap', ask: 'Identify the gap' },
-  { id: 'patients', label: 'Two patients', ask: 'Identify the gap' },
-  { id: 'where', label: 'Where', ask: 'Locate it in the pathway' },
-  { id: 'why', label: 'Why', ask: 'Explain it' },
-  { id: 'act', label: 'What to do', ask: 'Recommend actions' },
-  { id: 'ai', label: 'Your idea', ask: 'AI-driven, evidence-based' },
-  { id: 'trust', label: 'Trust', ask: 'Reliable, transparent data' },
+/** The simulator, one section at a time. */
+export const SECTIONS = [
+  { id: 'patient', label: 'The patient' },
+  { id: 'region', label: 'Actions in the region' },
+  { id: 'idea', label: 'Your own idea' },
+  { id: 'nordic', label: 'Learn from the Nordics' },
 ] as const;
-
-/** "What if…" switches in the Why step: change one thing about Patient B. */
-export interface WhatIf {
-  route: boolean; // work health care instead of public
-  near: boolean; // lives 10 km from hospital
-  edu: boolean; // higher education
-  help: boolean; // no navigation barriers (someone helps)
-}
-const NO_WHATIF: WhatIf = { route: false, near: false, edu: false, help: false };
-
-export function applyWhatIf(p: PatientProfile, w: WhatIf): PatientProfile {
-  return {
-    ...p,
-    route: w.route ? 'occupational_private' : p.route,
-    distanceKm: w.near ? 10 : p.distanceKm,
-    education: w.edu ? 'tertiary' : p.education,
-    navigationBarrier: w.help ? false : p.navigationBarrier,
-  };
-}
 
 interface State {
   mode: Mode;
-  step: number;
+  section: number;
   metric: MapMetric;
   phase: PhaseId | 'ALL';
   selectedRegion: string | null;
@@ -64,11 +39,12 @@ interface State {
   profileB: PatientProfile;
   /** The patient built in the simulator. */
   patient: PatientProfile;
-  whatIf: WhatIf;
   showAssumptions: boolean;
   showTable: boolean;
   /** Actions designed live with the AI (ids). */
   customActions: string[];
+  /** Nordic practices the AI has estimated for Finland (ids). */
+  nordicActions: string[];
   /** Video mode: hide all UI for the closing shot. */
   clean: boolean;
   /** The intro animation has finished (or was skipped). */
@@ -79,35 +55,14 @@ interface State {
   set: (patch: Partial<State>) => void;
   toggleIntervention: (id: string) => void;
   selectRegion: (id: string | null) => void;
-  goStep: (step: number) => void;
+  goSection: (n: number) => void;
   setMode: (mode: Mode) => void;
   setPatient: (patch: Partial<PatientProfile>) => void;
-  toggleWhatIf: (k: keyof WhatIf) => void;
-}
-
-function scene(step: number, s: State): Partial<State> {
-  const id = TOUR_STEPS[step].id;
-  const lapland = { metric: 'patient' as const, phase: 'ALL' as const, selectedRegion: s.profileB.regionId };
-  switch (id) {
-    case 'gap':
-      return { metric: 'days', phase: 'ALL', selectedRegion: null, interventions: [], whatIf: NO_WHATIF };
-    case 'patients':
-    case 'where':
-      return { ...lapland, interventions: [], whatIf: NO_WHATIF };
-    case 'why':
-      return { ...lapland, interventions: [] };
-    case 'act':
-      return { ...lapland, whatIf: NO_WHATIF };
-    case 'ai':
-      return { ...lapland, whatIf: NO_WHATIF };
-    default:
-      return { metric: 'days', phase: 'ALL', selectedRegion: null, interventions: [], whatIf: NO_WHATIF };
-  }
 }
 
 export const useStore = create<State>((set, get) => ({
   mode: 'welcome',
-  step: 0,
+  section: 0,
   metric: 'days',
   phase: 'ALL',
   selectedRegion: null,
@@ -115,10 +70,10 @@ export const useStore = create<State>((set, get) => ({
   profileA: MATTI_A,
   profileB: MATTI_B,
   patient: MATTI_B,
-  whatIf: NO_WHATIF,
   showAssumptions: false,
   showTable: false,
   customActions: [],
+  nordicActions: [],
   clean: false,
   mapReady: false,
   introDone:
@@ -131,30 +86,20 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ interventions: s.interventions.includes(id) ? s.interventions.filter((x) => x !== id) : [...s.interventions, id] })),
   selectRegion: (id) => {
     const s = get();
-    // in the simulator, clicking a region moves your patient there
-    if (s.mode === 'sim' && id) set({ selectedRegion: id, patient: { ...s.patient, regionId: id } });
+    // in the simulator, clicking a region moves the patient there (at that region's typical distance)
+    if (s.mode === 'sim' && id && id !== s.patient.regionId) set({ selectedRegion: id, patient: { ...s.patient, regionId: id, distanceKm: undefined } });
     else set({ selectedRegion: id });
   },
-  goStep: (step) => {
-    const s = get();
-    const n = Math.max(0, Math.min(TOUR_STEPS.length - 1, step));
-    set({ step: n, mode: 'tour', askOpen: false, ...scene(n, s) });
-  },
+  goSection: (n) => set({ section: Math.max(0, Math.min(SECTIONS.length - 1, n)), askOpen: false }),
   setMode: (mode) => {
     const s = get();
-    if (mode === 'tour') set({ mode, askOpen: false, ...scene(s.step, s) });
-    else if (mode === 'sim') set({ mode, metric: 'patient', phase: 'ALL', selectedRegion: s.patient.regionId, whatIf: NO_WHATIF });
-    else set({ mode, selectedRegion: null, metric: 'days', interventions: [], whatIf: NO_WHATIF, askOpen: false });
+    if (mode === 'sim') set({ mode, section: 0, metric: 'patient', phase: 'ALL', selectedRegion: s.patient.regionId });
+    else set({ mode, selectedRegion: null, metric: 'days', interventions: [], askOpen: false });
   },
   setPatient: (patch) => set((s) => ({ patient: { ...s.patient, ...patch }, ...(patch.regionId ? { selectedRegion: patch.regionId } : {}) })),
-  toggleWhatIf: (k) => set((s) => ({ whatIf: { ...s.whatIf, [k]: !s.whatIf[k] } })),
 }));
 
 /** The patient the map is showing ("this patient's Finland"). */
 export function useLensProfile(): PatientProfile {
-  const mode = useStore((s) => s.mode);
-  const patient = useStore((s) => s.patient);
-  const b = useStore((s) => s.profileB);
-  const w = useStore((s) => s.whatIf);
-  return useMemo(() => (mode === 'sim' ? patient : applyWhatIf(b, w)), [mode, patient, b, w]);
+  return useStore((s) => s.patient);
 }

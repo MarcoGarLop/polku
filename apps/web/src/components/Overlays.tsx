@@ -27,16 +27,6 @@ export function Header() {
       <button className="brand-btn" onClick={() => setMode('welcome')} aria-label="Polku, back to start">
         <Brand />
       </button>
-      {mode !== 'welcome' && (
-        <nav className="mode-switch glass" aria-label="Mode">
-          <button className={mode === 'tour' ? 'on' : ''} aria-pressed={mode === 'tour'} onClick={() => setMode('tour')}>
-            Guided tour
-          </button>
-          <button className={mode === 'sim' ? 'on' : ''} aria-pressed={mode === 'sim'} onClick={() => setMode('sim')}>
-            Simulator
-          </button>
-        </nav>
-      )}
       <div className="header-actions">
         {mode !== 'welcome' && (
           <button className="btn ghost" onClick={() => set({ askOpen: true })}>
@@ -54,7 +44,6 @@ export function Header() {
 export function Welcome() {
   const sim = useSim();
   const setMode = useStore((s) => s.setMode);
-  const goStep = useStore((s) => s.goStep);
   const startRef = useRef<HTMLButtonElement>(null);
   // in video mode the card waits for the opening title (4.2 s) before appearing
   // otherwise it waits for the intro animation, then lets the map fly in first
@@ -86,13 +75,13 @@ export function Welcome() {
           In our model, one starts treatment after <span className="hl-a">{months(c.a.totalMeanDays)} months</span>. The other after{' '}
           <span className="hl-b">{months(c.b.totalMeanDays)}</span>.
         </h1>
-        <p className="welcome-sub">Polku is an AI analyst. It reads Finland's national cancer strategy and public health data, estimates what each action would change, simulates it for every region, and recommends what to do first.</p>
+        <p className="welcome-sub">
+          Polku is an AI simulator for Finland's wellbeing services counties. Describe a patient, and it shows how long they wait, why, which actions would help
+          most, and what Finland could learn from its Nordic neighbours.
+        </p>
         <div className="welcome-btns">
-          <button ref={startRef} className="btn primary big" onClick={() => goStep(0)}>
-            ▶ Start the guided tour <span className="muted-on-primary">· 7 short steps</span>
-          </button>
-          <button className="btn big" onClick={() => setMode('sim')}>
-            Open the simulator
+          <button ref={startRef} className="btn primary big" onClick={() => setMode('sim')}>
+            ▶ Build a patient <span className="muted-on-primary">· 4 short sections</span>
           </button>
         </div>
         <div className="welcome-foot">

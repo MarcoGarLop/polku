@@ -6,6 +6,7 @@ import { runAgent, type AgentResponse, type ChatMessage, type UiContext } from '
 import { cacheState, FALLBACK_MODEL, MODEL, warmUp } from './gemini';
 import { buildPlan } from './plan';
 import { designAction, type DesignResult } from './design';
+import { compareNordic, PRACTICES, type NordicResult } from './nordic';
 
 const PORT = Number(process.env.PORT || 8787);
 const DEMO_MODE = process.env.DEMO_MODE === 'true';
@@ -43,6 +44,16 @@ function saveDesign(k: string, r: DesignResult) {
   designs[k] = r;
   writeFileSync(DESIGN_FILE, JSON.stringify({ _readme: 'Actions designed with Gemini, recorded for the offline demo.', entries: designs }, null, 2));
 }
+
+/* ---------- Nordic practices: recorded too ---------- */
+const NORDIC_FILE = join(ROOT, 'demo', 'nordic-practices.json');
+const nordic: Record<string, NordicResult> = (() => {
+  try {
+    return JSON.parse(readFileSync(NORDIC_FILE, 'utf8')).entries ?? {};
+  } catch {
+    return {};
+  }
+})();
 
 async function readBody(req: IncomingMessage): Promise<any> {
   const chunks: Buffer[] = [];
@@ -104,6 +115,26 @@ const server = createServer(async (req, res) => {
         return send(res, 200, out);
       } catch (e: any) {
         if (designs[k]) return send(res, 200, { ...designs[k], cached: true });
+        return send(res, 503, { error: String(e?.message ?? e).slice(0, 300) });
+      }
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/nordic') {
+      return send(res, 200, PRACTICES);
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/nordic') {
+      const b = await readBody(req);
+      const id = String(b.practiceId ?? '');
+      if (DEMO_MODE && url.searchParams.get('fresh') !== '1' && nordic[id]) return send(res, 200, { ...nordic[id], cached: true });
+      try {
+        const out = await withTimeout(compareNordic(id), 100000);
+        nordic[id] = out;
+        writeFileSync(NORDIC_FILE, JSON.stringify({ _readme: 'Nordic practices compared by Gemini, recorded for the offline demo.', entries: nordic }, null, 2));
+        console.log(`→ nordic ${id} ${out.model} ${out.ms} ms · unverified ${out.unverified.length}`);
+        return send(res, 200, out);
+      } catch (e: any) {
+        if (nordic[id]) return send(res, 200, { ...nordic[id], cached: true });
         return send(res, 503, { error: String(e?.message ?? e).slice(0, 300) });
       }
     }

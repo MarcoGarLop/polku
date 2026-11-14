@@ -1,0 +1,236 @@
+{
+  "_readme": "Nordic practices compared by Gemini, recorded for the offline demo.",
+  "entries": {
+    "dk_cpp": {
+      "practiceId": "dk_cpp",
+      "country": "Denmark",
+      "name": "Cancer patient pathways",
+      "whatTheyDid": "Denmark introduced national cancer patient pathways (Kræftpakkeforløb) with standardized alarm-symptom referral criteria for GPs, pre-booked specialist diagnostic slots, and defined maximum waiting times for each pathway step.",
+      "resultsThere": [
+        "Wait time to lung cancer diagnosis fell from 49 to 35 days (a 14-day, ~29% reduction), with total symptom-to-treatment averaging 67 days versus 155 days in Finland (S14, S01).",
+        "Three-year relative survival in lung cancer rose from 11% to 20%, with >25% diagnosed at stage I versus 17% in Finland and lead-time bias estimated at <15% (S14, S02).",
+        "However, a separate Danish randomized trial of direct GP access to chest CT alone showed no significant reduction in diagnostic time or stage (S17)."
+      ],
+      "whyDifferent": "Finland loses 96 of 154 days before referral (55d patient, 41d primary care), especially on the under-resourced public route where 35% wait >14 days to see a GP. Fast-track rules cannot fix GP shortages, lowest Nordic CT density, or 400–700 km hospital distances, and Sweden meets similar fast-track targets in only ~36% of cases.",
+      "estimate": {
+        "id": "nordic_dk_cpp",
+        "effects": [
+          {
+            "phase": "P2",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.08,
+            "mid": 0.15,
+            "high": 0.25
+          },
+          {
+            "phase": "P3",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.1,
+            "mid": 0.2,
+            "high": 0.35
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.1,
+            "mid": 0.2,
+            "high": 0.3
+          }
+        ],
+        "confidence": "medium",
+        "rationale": "Danish CPPs cut diagnostic wait by 14 days (~29%, S14). Applied to Finland's P3+P4 (34 days total), a full 14-day gain is ~41%, which we discount to 20% mid-estimate (~7 days) because Sweden's SVF reaches only ~36% compliance (S07) and Finland has low CT capacity (S02). Standardized GP referral criteria modestly trim P2 (41d) by 15% (~6 days).",
+        "evidence": [
+          "S14",
+          "S07",
+          "S17",
+          "S02",
+          "ROADMAP p.52",
+          "ROADMAP p.56"
+        ],
+        "roadmapAction": "2.5.2 & 3.1.2 Standardized referral criteria and national cancer care pathways (Kræftpakkeforløb/SVF model)",
+        "roadmapPage": 52,
+        "label": "Denmark: Cancer patient pathways"
+      },
+      "unverified": [],
+      "model": "gemini-4-argon",
+      "ms": 32018
+    },
+    "no_pakkeforlop": {
+      "practiceId": "no_pakkeforlop",
+      "country": "Norway",
+      "name": "Cancer patient pathways (pakkeforløp)",
+      "whatTheyDid": "Norway introduced standardized cancer patient pathways (pakkeforløp) setting maximum wait times from specialist referral to first treatment (35 days for systemic therapy, 42 days for surgery or radiotherapy), backed by pathway coordinators.",
+      "resultsThere": [
+        "Target set for 70% of lung cancer patients to start treatment within 35 days (chemotherapy) or 42 days (surgery/radiotherapy) from referral (S06).",
+        "In practice, only 40% of patients started treatment within the 42-day target, showing significant implementation gaps (S06).",
+        "A study estimated that optimizing the diagnostic work-up could raise compliance from 40% to 80% (S06)."
+      ],
+      "whyDifferent": "In Finland, 96 of the 154 total pathway days occur before specialist referral (55 patient, 41 primary care) and public primary care is much slower than occupational care. Because pakkeforløp starts at referral, it only touches the final 58 specialist days and cannot fix Finland's biggest pre-referral bottlenecks or long hospital travel distances.",
+      "estimate": {
+        "id": "nordic_no_pakkeforlop",
+        "effects": [
+          {
+            "phase": "P3",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.08,
+            "mid": 0.18,
+            "high": 0.3
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.08,
+            "mid": 0.18,
+            "high": 0.3
+          },
+          {
+            "phase": "P5",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.05,
+            "mid": 0.12,
+            "high": 0.25
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_phase_days",
+            "appliesTo": "navigation_barrier",
+            "low": 0.03,
+            "mid": 0.07,
+            "high": 0.12
+          }
+        ],
+        "confidence": "medium",
+        "rationale": "Finland's referral-to-treatment averages 58 days (P3=12, P4=22, P5=24) versus Norway's 35–42 day target (a ~28–40% gap). Because Norway only achieved 40% compliance (S06) and Sweden ~36% (S07), we discount full convergence to a conservative 12–18% mid reduction (~9 days saved across P3–P5), plus a small coordinator boost for patients with navigation barriers (S16).",
+        "evidence": [
+          "S06",
+          "S07",
+          "S14",
+          "S16",
+          "ROADMAP p.32",
+          "ROADMAP p.56"
+        ],
+        "roadmapAction": "3.1.2 Laaditaan syöpäkohtaiset hoitoketjukuvaukset, ja niiden pohjalta sovelletut alueelliset hoitoketjut, sekä mekanismi niiden ylläpitoon ja hallintaan",
+        "roadmapPage": 56,
+        "label": "Norway: Cancer patient pathways (pakkeforløp)"
+      },
+      "unverified": [],
+      "model": "gemini-4-argon",
+      "ms": 20658
+    },
+    "se_svf": {
+      "practiceId": "se_svf",
+      "country": "Sweden",
+      "name": "Standardised care pathways (SVF)",
+      "whatTheyDid": "Sweden introduced standardised care pathways (SVF) triggered at 'well-founded suspicion' of cancer, setting strict lead-time targets from suspicion to treatment (40–44 days for lung cancer) with a goal of 80% compliance.",
+      "resultsThere": [
+        "Only ~36% of lung cancer patients start treatment within the 40–44 day target (vs. the 80% goal), with no improvement over the years [S07].",
+        "Total symptom-to-treatment time in Sweden averages 107 days compared to 155 days in Finland [S01]."
+      ],
+      "whyDifferent": "Finland loses 96 of 154 days in patient (55d) and primary care (41d) intervals, especially on the slow public route. Because SVF only starts at 'well-founded suspicion', it leaves patient delay and early GP access untouched, while long hospital distances and CT scarcity further limit specialist speed-ups.",
+      "estimate": {
+        "id": "nordic_se_svf",
+        "effects": [
+          {
+            "phase": "P2",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.05,
+            "mid": 0.12,
+            "high": 0.22
+          },
+          {
+            "phase": "P3",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.05,
+            "mid": 0.15,
+            "high": 0.3
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.05,
+            "mid": 0.12,
+            "high": 0.25
+          },
+          {
+            "phase": "P5",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.02,
+            "mid": 0.08,
+            "high": 0.18
+          }
+        ],
+        "confidence": "medium",
+        "rationale": "Denmark's similar pathway cut diagnostic wait by 14d (49→35d, ~29%) [S14], and Finland's 58d specialist phase exceeds Sweden's 40–44d target [S01, S07]. However, Sweden's ~36% compliance with no improvement over time [S07] shows high implementation risk, so we discount effects to ~8–15% across P2–P5.",
+        "evidence": [
+          "S01",
+          "S03",
+          "S07",
+          "S14",
+          "ROADMAP p.52",
+          "ROADMAP p.56"
+        ],
+        "roadmapAction": "Toimenpide 2.5.2 & 3.1.2: Standardoidut lähetekriteerit ja kansalliset syöpäkohtaiset hoitoketjukuvaukset (SVF-malli)",
+        "roadmapPage": 52,
+        "label": "Sweden: Standardised care pathways (SVF)"
+      },
+      "unverified": [],
+      "model": "gemini-4-argon",
+      "ms": 21902
+    },
+    "dk_direct_ct": {
+      "practiceId": "dk_direct_ct",
+      "country": "Denmark",
+      "name": "Direct CT access for GPs",
+      "whatTheyDid": "General practitioners were given direct access to order low-dose chest CT scans for patients with suspected lung cancer without requiring a prior specialist referral.",
+      "resultsThere": [
+        "No significant reduction in time to diagnosis in the intention-to-treat analysis (S17).",
+        "No significant improvement in cancer stage at diagnosis (S17)."
+      ],
+      "whyDifferent": "Finland loses 41 days in primary care (P2) where almost no GPs can order CTs directly, so bypassing specialist gatekeeping could theoretically help. However, Finland has the lowest CT scanner density in the Nordics (S02) and long travel distances, meaning radiology bottlenecks would severely limit any potential time savings.",
+      "estimate": {
+        "id": "nordic_dk_direct_ct",
+        "effects": [
+          {
+            "phase": "P2",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0,
+            "mid": 0.03,
+            "high": 0.1
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0,
+            "mid": 0.02,
+            "high": 0.08
+          }
+        ],
+        "confidence": "medium",
+        "rationale": "The Danish cluster-RCT (S17) found no significant reduction in diagnostic time. Therefore, we keep estimates near zero (mid 2–3% in P2/P4, ~1–2 days total), with a modest upper bound (8–10%, ~4 days in P2) in case direct imaging slightly speeds up Finland's slow 41-day primary care interval despite low national CT capacity (S02).",
+        "evidence": [
+          "S17",
+          "S02",
+          "ROADMAP p.52"
+        ],
+        "roadmapAction": "2.5.2 Standardised referral criteria and direct diagnostic routes from primary care",
+        "roadmapPage": 52,
+        "label": "Denmark: Direct CT access for GPs"
+      },
+      "unverified": [],
+      "model": "gemini-4-argon",
+      "ms": 16143
+    }
+  }
+}
