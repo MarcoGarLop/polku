@@ -8,6 +8,7 @@ import { SimulatorPanel, SimulatorResult } from './components/Simulator';
 import { AskDrawer } from './components/AskPanel';
 import { Assumptions } from './components/Assumptions';
 import { SafeBoundary } from './components/SafeBoundary';
+import { Splash } from './components/Splash';
 
 /** `?video` turns on video mode: the recorder drives the store and can hide the UI for the closing shot. */
 export const VIDEO_MODE = typeof location !== 'undefined' && new URLSearchParams(location.search).has('video');
@@ -50,6 +51,7 @@ export default function App() {
         </SafeBoundary>
         <Assumptions />
         <RegionTable />
+        <Splash />
       </div>
     </SimProvider>
   );

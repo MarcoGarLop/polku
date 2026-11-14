@@ -4,21 +4,12 @@ import { useStore } from '../state/store';
 import { rgbCss } from '../map/colors';
 import type { MetricSpec } from '../map/MapView';
 import { d0 } from './ui';
+import { LogoMark } from './Logo';
 
 function Brand() {
   return (
     <div className="brand">
-      <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden>
-        <defs>
-          <linearGradient id="pg" x1="0" x2="1">
-            <stop offset="0" stopColor="#22d3ee" />
-            <stop offset="1" stopColor="#fb7185" />
-          </linearGradient>
-        </defs>
-        <path d="M5 25 C 11 6, 21 6, 27 25" stroke="url(#pg)" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-        <circle cx="5" cy="25" r="3" fill="#22d3ee" />
-        <circle cx="27" cy="25" r="3" fill="#fb7185" />
-      </svg>
+      <LogoMark size={34} />
       <div>
         <div className="brand-name">Polku</div>
         <div className="brand-sub">Equal lung cancer care across Finland</div>
@@ -66,13 +57,15 @@ export function Welcome() {
   const goStep = useStore((s) => s.goStep);
   const startRef = useRef<HTMLButtonElement>(null);
   // in video mode the card waits for the opening title (4.2 s) before appearing
+  // otherwise it waits for the intro animation, then lets the map fly in first
   const video = new URLSearchParams(location.search).has('video');
-  const [show, setShow] = useState(!video);
+  const introDone = useStore((s) => s.introDone);
+  const [show, setShow] = useState(false);
   useEffect(() => {
-    if (!video) return;
-    const t = setTimeout(() => setShow(true), 4200);
+    if (!introDone) return;
+    const t = setTimeout(() => setShow(true), video ? 4200 : 1300);
     return () => clearTimeout(t);
-  }, [video]);
+  }, [video, introDone]);
   useEffect(() => {
     if (show) startRef.current?.focus({ preventScroll: true });
   }, [show]);

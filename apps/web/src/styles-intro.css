@@ -1,0 +1,45 @@
+/* =====================================================================
+   Intro: P → lungs (Chromium animates the SVG `d` property; other browsers show the draw + fade)
+   ===================================================================== */
+.splash {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; cursor: pointer;
+  background: radial-gradient(900px 600px at 50% 46%, #0e1d38 0%, #050912 70%);
+  transition: opacity 0.45s ease;
+}
+.splash.leaving { opacity: 0; pointer-events: none; }
+.splash-inner { display: flex; flex-direction: column; align-items: center; transform: translateY(-10px); }
+.splash-logo { width: 190px; height: 190px; overflow: visible; filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.25)); }
+
+/* 1 · draw the P (0 – 0.9 s) */
+.sp-stem, .sp-bowl { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.sp-stem { opacity: 0; animation: appear 0.01s 0.1s forwards, draw 0.55s 0.1s cubic-bezier(.6,0,.3,1) forwards, stemToTrachea 0.85s 1.0s cubic-bezier(.65,0,.35,1) forwards; }
+.sp-bowl { opacity: 0; animation: appear 0.01s 0.45s forwards, draw 0.6s 0.45s cubic-bezier(.6,0,.3,1) forwards, bowlToLobe 0.85s 1.0s cubic-bezier(.65,0,.35,1) forwards; }
+
+/* 2 · the P becomes the trachea and the right lung (1.0 – 1.85 s); left lung and bronchi draw in */
+@keyframes stemToTrachea { to { d: path('M50 44 C 50 30, 50 18, 50 6'); } }
+@keyframes bowlToLobe { to { d: path('M64 40 C 64 28, 72 18, 80 22 C 94 30, 100 70, 96 92 C 92 102, 72 102, 66 92 C 62 84, 64 60, 64 40 Z'); } }
+.sp-lobeL, .sp-bronchus { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.sp-lobeL { opacity: 0; animation: appear 0.01s 1.35s forwards, draw 0.8s 1.35s cubic-bezier(.6,0,.3,1) forwards; }
+.sp-bronchus { opacity: 0; animation: appear 0.01s 1.55s forwards, draw 0.45s 1.55s ease-out forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+/* round line caps would show a dot before a stroke starts drawing */
+@keyframes appear { to { opacity: 1; } }
+
+/* 3 · one breath (2.1 – 3.1 s) */
+.breathe { transform-box: fill-box; transform-origin: 50% 40%; animation: breathe 1s 2.1s ease-in-out both; }
+@keyframes breathe { 0% { transform: scale(1); } 45% { transform: scale(1.07); } 100% { transform: scale(1); } }
+
+/* 4 · the name */
+.splash-name { margin-top: 18px; font-size: 44px; font-weight: 800; letter-spacing: -0.03em; opacity: 0; animation: rise 0.6s 2.0s ease-out forwards;
+  background: linear-gradient(90deg, #67e8f9, #fda4af); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.splash-tag { margin-top: 4px; font-size: 15px; color: #a7b4ca; opacity: 0; animation: rise 0.6s 2.25s ease-out forwards; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.splash-skip { position: absolute; bottom: 26px; font-size: 12.5px; color: #64748b; opacity: 0; animation: rise 0.4s 1.2s forwards; }
+
+@media (prefers-reduced-motion: reduce) { .splash { display: none; } }
+
+/* header mark */
+.logo-mark { flex: none; }
+
+/* hold every intro animation until the map is built (see Splash.tsx) */
+.splash:not(.play) *, .splash:not(.play) { animation-play-state: paused !important; }

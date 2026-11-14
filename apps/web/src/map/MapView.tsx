@@ -77,14 +77,16 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
   const [time, setTime] = useState(0);
   const [hover, setHover] = useState<string | null>(null);
 
+  // the camera flies in once the intro animation has finished
+  const introDone = useStore((s) => s.introDone);
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion || !introDone) return;
     const t = setTimeout(
       () => setViewState({ ...OVERVIEW, transitionDuration: 2600, transitionInterpolator: new FlyToInterpolator({ speed: 0.9 }) } as MapViewState),
-      200,
+      150,
     );
     return () => clearTimeout(t);
-  }, [reduceMotion]);
+  }, [reduceMotion, introDone]);
 
   // Camera follows the raised region
   useEffect(() => {
@@ -348,6 +350,10 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
         effects={[lighting]}
         getCursor={({ isHovering, isDragging }) => (isDragging ? 'grabbing' : isHovering ? 'pointer' : 'grab')}
         style={{ background: 'transparent' }}
+        // first frame with the map drawn = heavy tessellation done; the intro can now animate smoothly
+        onAfterRender={() => {
+          if (geo && !useStore.getState().mapReady) setTimeout(() => useStore.getState().set({ mapReady: true }), 120);
+        }}
       />
       {hover && <Tooltip id={hover} geo={geo} muniDays={muniDays} spec={spec} lens={lensName} />}
     </div>

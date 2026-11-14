@@ -71,6 +71,10 @@ interface State {
   customActions: string[];
   /** Video mode: hide all UI for the closing shot. */
   clean: boolean;
+  /** The intro animation has finished (or was skipped). */
+  introDone: boolean;
+  /** The map has rendered once (heavy first tessellation done): safe to start smooth animations. */
+  mapReady: boolean;
   askOpen: boolean;
   set: (patch: Partial<State>) => void;
   toggleIntervention: (id: string) => void;
@@ -116,6 +120,11 @@ export const useStore = create<State>((set, get) => ({
   showTable: false,
   customActions: [],
   clean: false,
+  mapReady: false,
+  introDone:
+    typeof window === 'undefined' ||
+    new URLSearchParams(window.location.search).has('video') ||
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   askOpen: false,
   set: (patch) => set(patch),
   toggleIntervention: (id) =>
