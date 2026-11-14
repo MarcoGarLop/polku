@@ -467,9 +467,9 @@ export function SimulatorPanel() {
 
 /** AstraZeneca's pathway steps, grouped from the model's five phases. */
 const STRETCHES = [
-  { key: 'detection', label: 'Detection', color: '#f59e0b' },
-  { key: 'referral', label: 'Referral', color: '#fbbf24' },
-  { key: 'hospital', label: 'Diagnosis & treatment', color: '#60a5fa' },
+  { key: 'detection', label: 'Detection', color: '#f59e0b', what: 'First symptom to first doctor' },
+  { key: 'referral', label: 'Referral', color: '#fbbf24', what: 'Primary care until the referral is sent' },
+  { key: 'hospital', label: 'Hospital', color: '#60a5fa', what: 'Specialist, diagnosis and first treatment' },
 ] as const;
 
 const BUILD_LABEL = (k: BuildUpKey, p: PatientProfile, regionName: string, km: number) =>
@@ -482,7 +482,7 @@ const BUILD_LABEL = (k: BuildUpKey, p: PatientProfile, regionName: string, km: n
     support: p.navigationBarrier ? 'Lives alone, 75+ or other language' : 'Has support',
   })[k];
 
-/** Right-hand result: the running sum, the effect of the plan, and how it compares with the Nordics. */
+/** Right-hand result: where in the pathway the days are lost, and why (a waterfall from Finland's average). */
 export function SimulatorResult() {
   const sim = useSim();
   const patient = useStore((s) => s.patient);
@@ -494,14 +494,13 @@ export function SimulatorResult() {
   const r = useMemo(() => simulateProfile(model, patient, active), [patient, active]);
   const base = steps.at(-1)!.total;
   const saved = base - r.totalMeanDays;
-  const referralToTreatment = r.phases[2].meanDays + r.phases[3].meanDays + r.phases[4].meanDays;
 
   /* comparison with Patient A (same actions, so the gap is like for like) */
   const isA = (['regionId', 'route', 'education', 'navigationBarrier'] as const).every((k) => patient[k] === MATTI_A[k]) && Math.round(km) === MATTI_A.distanceKm;
   const a = useMemo(() => simulateProfile(model, MATTI_A, active), [active]);
   const gapA = r.totalMeanDays - a.totalMeanDays;
 
-  /* where in the pathway: detection / referral / diagnosis & treatment, this patient vs Patient A vs Finland's average */
+  /* ---- where in the pathway: detection / referral / diagnosis & treatment ---- */
   const avgPhases = useMemo(() => {
     const tp = sim.current.reduce((s, x) => s + x.population, 0);
     return [0, 1, 2, 3, 4].map((i) => sim.current.reduce((s, x) => s + x.population * x.phases[i].meanDays, 0) / tp);
@@ -517,18 +516,27 @@ export function SimulatorResult() {
   const pathMax = Math.max(...pathRows.map((x) => x.parts[0] + x.parts[1] + x.parts[2]));
   const extra = mine.map((v, i) => v - avg[i]);
   const extraTotal = extra[0] + extra[1] + extra[2];
-  const pathNote =
-    extraTotal > 1
-      ? `${Math.round(Math.min(1, Math.max(0, (extra[0] + extra[1]) / extraTotal)) * 100)}% of this patient's extra days compared with the average are lost before a specialist ever sees them.`
-      : `This patient waits less than the average. Most of their time is still spent ${mine[0] >= Math.max(mine[1], mine[2]) ? 'before seeing a doctor' : mine[1] >= mine[2] ? 'in primary care' : 'in hospital'}.`;
+  const biggest = extra.indexOf(Math.max(...extra));
+  const beforeShare = extraTotal > 1 ? Math.round(Math.min(1, Math.max(0, (extra[0] + extra[1]) / extraTotal)) * 100) : null;
 
-  const max = Math.max(240, base + 10);
-  const pos = (v: number) => `${Math.min(100, (v / max) * 100)}%`;
-  const marks = [
-    { label: 'Denmark', v: 67, cls: 'dk' },
-    { label: 'Sweden', v: 107, cls: 'se' },
-    { label: 'Finland avg', v: sim.national.base, cls: 'fi' },
+  /* ---- why: waterfall from Finland's average to this patient ---- */
+  const water = [
+    ...steps.slice(1).map((s) => ({ key: s.key as string, label: BUILD_LABEL(s.key, patient, region.nameEn, km), from: s.total - s.delta, to: s.total })),
+    ...(saved > 0.5 ? [{ key: 'actions', label: `${active.length} action${active.length > 1 ? 's' : ''} in the plan`, from: base, to: r.totalMeanDays }] : []),
   ];
+  // zoomed scale: start a little below the smallest running total so each factor's bar is readable
+  const wVals = [steps[0].total, r.totalMeanDays, ...water.flatMap((w) => [w.from, w.to])];
+  const wHi = Math.max(...wVals);
+  const wLo = Math.min(...wVals);
+  const wMin = Math.max(0, Math.floor((wLo - Math.max(20, (wHi - wLo) * 0.45)) / 10) * 10);
+  const wSpan = wHi * 1.03 - wMin;
+  const wx = (v: number) => `${(Math.max(0, v - wMin) / wSpan) * 100}%`;
+  const ww = (f: number, t: number) => `${(Math.abs(t - f) / wSpan) * 100}%`;
+  // the factor that moves this patient most in the direction of their result (adds days if slower, saves if faster)
+  const slower = base >= steps[0].total;
+  const biggestFactor = water
+    .filter((w) => w.key !== 'actions' && (slower ? w.to - w.from > 0.5 : w.to - w.from < -0.5))
+    .sort((x, y) => Math.abs(y.to - y.from) - Math.abs(x.to - x.from))[0];
 
   return (
     <section className="sim-result glass fade-in" aria-live="polite" aria-label="Result">
@@ -538,6 +546,7 @@ export function SimulatorResult() {
       <div className="big-num">
         {d0(r.totalMeanDays)} <span>days from first symptom to treatment</span>
       </div>
+      {saved > 0.5 && <div className="saved-pill">−{d0(saved)} days thanks to the plan</div>}
       {!isA && (
         <div className="vs-a">
           <span>
@@ -550,83 +559,99 @@ export function SimulatorResult() {
         </div>
       )}
 
-      <div className="pathway" aria-label="Where in the care pathway the days are lost">
-        <div className="bench-title">Where the days are lost</div>
-        <div className="pw-legend">
-          {STRETCHES.map((s) => (
-            <span key={s.key}>
-              <i style={{ background: s.color }} />
-              {s.label}
-            </span>
-          ))}
+      {/* ---------------- where ---------------- */}
+      <h3 className="res-h">
+        <span className="res-n">1</span> Where the days are lost
+      </h3>
+      {beforeShare != null ? (
+        <p className="res-lead">
+          <b className="big-share">{beforeShare}%</b> of this patient's extra days are lost <b>before a specialist ever sees them</b>.
+        </p>
+      ) : (
+        <p className="res-lead">
+          This patient waits <b>{d0(Math.max(0, -extraTotal))} days less</b> than Finland's average patient. The longest stretch is still <b>{STRETCHES[mine.indexOf(Math.max(...mine))].label.toLowerCase()}</b>.
+        </p>
+      )}
+      {pathRows.map((row) => (
+        <div key={row.label} className={`pw-row ${row.cls}`}>
+          <span className="pw-name">{row.label}</span>
+          <div className="pw-track">
+            {row.parts.map((v, i) => (
+              <div key={i} className="pw-seg" style={{ width: `${(v / pathMax) * 100}%`, background: STRETCHES[i].color }} title={`${STRETCHES[i].label}: ${d0(v)} days`}>
+                {(v / pathMax) * 100 > 10 ? d0(v) : ''}
+              </div>
+            ))}
+          </div>
         </div>
-        {pathRows.map((row) => (
-          <div key={row.label} className={`pw-row ${row.cls}`}>
-            <span className="pw-name">{row.label}</span>
-            <div className="pw-track">
-              {row.parts.map((v, i) => (
-                <div key={i} className="pw-seg" style={{ width: `${(v / pathMax) * 100}%`, background: STRETCHES[i].color }} title={`${STRETCHES[i].label}: ${d0(v)} days`}>
-                  {(v / pathMax) * 100 > 11 ? d0(v) : ''}
-                </div>
-              ))}
+      ))}
+      <div className="stretch-cards">
+        {STRETCHES.map((s, i) => (
+          <div key={s.key} className={`stretch ${i === biggest && extra[i] > 1 ? 'hot' : ''}`} style={{ ['--c' as any]: s.color }}>
+            {i === biggest && extra[i] > 1 && <span className="hot-tag">Biggest gap</span>}
+            <div className="st-label">{s.label}</div>
+            <div className="st-days">
+              {d0(mine[i])}
+              <span> d</span>
             </div>
+            <div className={`st-delta ${extra[i] >= 0.5 ? 'up' : extra[i] <= -0.5 ? 'down' : ''}`}>
+              {extra[i] >= 0.5 ? '+' : extra[i] <= -0.5 ? '−' : '±'}
+              {d0(Math.abs(extra[i]))} vs avg
+            </div>
+            <div className="st-what">{s.what}</div>
           </div>
         ))}
-        <div className="pw-note">{pathNote}</div>
       </div>
 
-      <div className="bench-title" style={{ marginTop: 14 }}>
-        Why: how the days add up
-      </div>
-      <div className="buildup" aria-label="How the days add up">
-        {steps.map((s) => (
-          <div key={s.key} className={`bu-row ${s.key === 'national' ? 'first' : ''}`}>
-            <span>{BUILD_LABEL(s.key, patient, region.nameEn, km)}</span>
-            <b className={s.key === 'national' ? '' : s.delta >= 0.5 ? 'up' : s.delta <= -0.5 ? 'down' : ''}>{s.key === 'national' ? d0(s.total) : sign(s.delta)}</b>
+      {/* ---------------- why ---------------- */}
+      <h3 className="res-h">
+        <span className="res-n">2</span> Why: how the days add up
+      </h3>
+      {biggestFactor && (
+        <p className="res-lead">
+          {slower ? 'What adds the most' : 'What saves the most'}: <b>{biggestFactor.label}</b>{' '}
+          <b className={slower ? 'txt-up' : 'txt-down'}>({sign(biggestFactor.to - biggestFactor.from)} days)</b>.
+        </p>
+      )}
+      <div className="waterfall" role="img" aria-label={`From Finland's average of ${d0(steps[0].total)} days to this patient's ${d0(r.totalMeanDays)} days`}>
+        <div className="wf-row base">
+          <span className="wf-label">Finland's average</span>
+          <div className="wf-track">
+            <div className="wf-bar neutral" style={{ left: 0, width: wx(steps[0].total) }} />
           </div>
-        ))}
-        {saved > 0.5 && (
-          <div className="bu-row">
-            <span>
-              {active.length} action{active.length > 1 ? 's' : ''} in the plan
-            </span>
-            <b className="down">−{d0(saved)}</b>
-          </div>
-        )}
-        <div className="bu-row total">
-          <span>This patient</span>
-          <b>{d0(r.totalMeanDays)} days</b>
+          <b className="wf-val">{d0(steps[0].total)}</b>
         </div>
-      </div>
-
-      <div className="bench">
-        <div className="bench-title">Compared with the Nordics</div>
-        <div className="ruler" role="img" aria-label={`This patient ${d0(r.totalMeanDays)} days; Denmark 67, Sweden 107, Finland average ${d0(sim.national.base)}`}>
-          <div className="ruler-track" />
-          {marks.map((m) => (
-            <div key={m.label} className={`mark ${m.cls}`} style={{ left: pos(m.v) }}>
-              <i />
-              <span>
-                {m.label}
-                <br />
-                {d0(m.v)}
-              </span>
+        {water.map((w) => {
+          const up = w.to >= w.from;
+          return (
+            <div key={w.key} className="wf-row">
+              <span className="wf-label">{w.label}</span>
+              <div className="wf-track">
+                <div className="wf-guide" style={{ left: wx(Math.min(w.from, w.to)) }} />
+                <div className={`wf-bar ${Math.abs(w.to - w.from) < 0.5 ? 'flat' : up ? 'up' : 'down'}`} style={{ left: wx(Math.min(w.from, w.to)), width: ww(w.from, w.to) }} />
+              </div>
+              <b className={`wf-val ${Math.abs(w.to - w.from) < 0.5 ? '' : up ? 'up' : 'down'}`}>{sign(w.to - w.from)}</b>
             </div>
-          ))}
-          {saved > 0.5 && <div className="patient-dot ghost" style={{ left: pos(base) }} />}
-          <div className="patient-dot" style={{ left: pos(r.totalMeanDays) }} />
-        </div>
-        <div className="bench-note">
-          From referral to treatment this patient waits <b>{d0(referralToTreatment)} days</b>. Norway's target is <b>42 days or less</b>.
+          );
+        })}
+        <div className="wf-row total">
+          <span className="wf-label">This patient</span>
+          <div className="wf-track">
+            <div className="wf-bar total" style={{ left: 0, width: wx(r.totalMeanDays) }} />
+          </div>
+          <b className="wf-val">{d0(r.totalMeanDays)}</b>
         </div>
       </div>
+      <p className="wf-note">
+        Start from Finland's average patient, then add each factor in turn: <span className="up">red</span> adds days, <span className="down">green</span> saves days.
+        {wMin > 0 && <> The scale starts at {wMin} days.</>}
+      </p>
 
       <div className="plan-btns">
         <button className="btn primary" onClick={() => set({ askOpen: true })}>
           Ask the AI
         </button>
         <button className="btn" onClick={() => openPlan(patient.regionId, 'en')}>
-          ⬇ Plan for {region.nameEn}
+          ⬇ Region plan
         </button>
       </div>
     </section>
