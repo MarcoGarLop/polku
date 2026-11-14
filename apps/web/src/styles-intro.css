@@ -1,5 +1,6 @@
 /* =====================================================================
-   Intro: P → lungs (Chromium animates the SVG `d` property; other browsers show the draw + fade)
+   Intro: the P opens into a lung (bronchi + alveoli), then mirrors into a pair.
+   Chromium animates the SVG `d` property; other browsers still get the draw, fill, bloom and mirror.
    ===================================================================== */
 .splash {
   position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; cursor: pointer;
@@ -8,31 +9,47 @@
 }
 .splash.leaving { opacity: 0; pointer-events: none; }
 .splash-inner { display: flex; flex-direction: column; align-items: center; transform: translateY(-10px); }
-.splash-logo { width: 190px; height: 190px; overflow: visible; filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.25)); }
+.splash-logo { width: 210px; height: 210px; overflow: visible; filter: drop-shadow(0 0 24px rgba(56, 189, 248, 0.22)); }
 
-/* 1 · draw the P (0 – 0.9 s) */
-.sp-stem, .sp-bowl { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.sp-stem { opacity: 0; animation: appear 0.01s 0.1s forwards, draw 0.55s 0.1s cubic-bezier(.6,0,.3,1) forwards, stemToTrachea 0.85s 1.0s cubic-bezier(.65,0,.35,1) forwards; }
-.sp-bowl { opacity: 0; animation: appear 0.01s 0.45s forwards, draw 0.6s 0.45s cubic-bezier(.6,0,.3,1) forwards, bowlToLobe 0.85s 1.0s cubic-bezier(.65,0,.35,1) forwards; }
+/* hold everything until the map is built (see Splash.tsx) */
+.splash:not(.play) *, .splash:not(.play) { animation-play-state: paused !important; }
 
-/* 2 · the P becomes the trachea and the right lung (1.0 – 1.85 s); left lung and bronchi draw in */
-@keyframes stemToTrachea { to { d: path('M50 44 C 50 30, 50 18, 50 6'); } }
-@keyframes bowlToLobe { to { d: path('M64 40 C 64 28, 72 18, 80 22 C 94 30, 100 70, 96 92 C 92 102, 72 102, 66 92 C 62 84, 64 60, 64 40 Z'); } }
-.sp-lobeL, .sp-bronchus { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.sp-lobeL { opacity: 0; animation: appear 0.01s 1.35s forwards, draw 0.8s 1.35s cubic-bezier(.6,0,.3,1) forwards; }
-.sp-bronchus { opacity: 0; animation: appear 0.01s 1.55s forwards, draw 0.45s 1.55s ease-out forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 /* round line caps would show a dot before a stroke starts drawing */
 @keyframes appear { to { opacity: 1; } }
 
-/* 3 · one breath (2.1 – 3.1 s) */
-.breathe { transform-box: fill-box; transform-origin: 50% 40%; animation: breathe 1s 2.1s ease-in-out both; }
-@keyframes breathe { 0% { transform: scale(1); } 45% { transform: scale(1.07); } 100% { transform: scale(1); } }
+/* 1 · the P is drawn (0.1 – 1.05 s) */
+.sp-stem, .sp-bowl { opacity: 0; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.sp-stem { animation: appear 0.01s 0.1s forwards, draw 0.55s 0.1s cubic-bezier(.6,0,.3,1) forwards, stemToTrachea 0.8s 1.1s cubic-bezier(.65,0,.35,1) forwards; }
+.sp-bowl { animation: appear 0.01s 0.45s forwards, draw 0.6s 0.45s cubic-bezier(.6,0,.3,1) forwards, bowlToLobe 0.8s 1.1s cubic-bezier(.65,0,.35,1) forwards; }
 
-/* 4 · the name */
-.splash-name { margin-top: 18px; font-size: 44px; font-weight: 800; letter-spacing: -0.03em; opacity: 0; animation: rise 0.6s 2.0s ease-out forwards;
+/* 2 · the P opens: stem → trachea, bowl swells into the right lung (1.1 – 1.9 s) and fills softly */
+@keyframes stemToTrachea { to { d: path('M50 40 C 50 28, 50 16, 50 4'); } }
+@keyframes bowlToLobe { to { d: path('M64 40 C 64 28, 72 18, 80 22 C 94 30, 100 70, 96 92 C 92 102, 72 102, 66 92 C 62 84, 64 60, 64 40 Z'); } }
+.lung-fill { fill: url(#splash-g); fill-opacity: 0.13; stroke: none; }
+.sp-fill { opacity: 0; animation: appear 0.5s 1.6s ease-out forwards; }
+
+/* 3 · bronchi grow (1.75 – 2.6 s), 4 · alveoli bloom at the tips (2.25 – 2.9 s) */
+.tree { stroke-width: 2.4; }
+.sp-tree { opacity: 0; stroke-dasharray: 1; stroke-dashoffset: 1; animation: appear 0.01s forwards, draw 0.5s cubic-bezier(.4,0,.2,1) forwards; }
+.alv-dot { fill: url(#splash-g); stroke: none; }
+.sp-alv { transform-box: fill-box; transform-origin: center; transform: scale(0); animation: bloom 0.42s cubic-bezier(.3,1.7,.5,1) forwards; }
+@keyframes bloom { to { transform: scale(1); } }
+
+/* 5 · the finished lung is cloned and unfolds to the left like a mirror (2.95 – 3.75 s) */
+.mirror { opacity: 0; transform-box: fill-box; transform-origin: 0% 50%; animation: unfold 0.8s 2.95s cubic-bezier(.65,0,.35,1) forwards; }
+@keyframes unfold {
+  0% { opacity: 0; transform: scaleX(1); }
+  12% { opacity: 1; }
+  100% { opacity: 1; transform: scaleX(-1); }
+}
+
+/* 6 · one breath and the name (3.7 – 4.7 s) */
+.breathe { transform-box: fill-box; transform-origin: 50% 40%; animation: breathe 1.05s 3.75s ease-in-out both; }
+@keyframes breathe { 0% { transform: scale(1); } 45% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.splash-name { margin-top: 18px; font-size: 44px; font-weight: 800; letter-spacing: -0.03em; opacity: 0; animation: rise 0.6s 3.55s ease-out forwards;
   background: linear-gradient(90deg, #67e8f9, #fda4af); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.splash-tag { margin-top: 4px; font-size: 15px; color: #a7b4ca; opacity: 0; animation: rise 0.6s 2.25s ease-out forwards; }
+.splash-tag { margin-top: 4px; font-size: 15px; color: #a7b4ca; opacity: 0; animation: rise 0.6s 3.8s ease-out forwards; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .splash-skip { position: absolute; bottom: 26px; font-size: 12.5px; color: #64748b; opacity: 0; animation: rise 0.4s 1.2s forwards; }
 
@@ -40,6 +57,3 @@
 
 /* header mark */
 .logo-mark { flex: none; }
-
-/* hold every intro animation until the map is built (see Splash.tsx) */
-.splash:not(.play) *, .splash:not(.play) { animation-play-state: paused !important; }
