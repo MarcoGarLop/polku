@@ -29,6 +29,47 @@ export async function getHealth(): Promise<Health | null> {
   }
 }
 
+/** Why an AI call failed, in words a user can act on. */
+export class AiError extends Error {
+  constructor(public kind: 'offline' | 'busy' | 'timeout', message: string) {
+    super(message);
+  }
+}
+export const aiErrorText = (e: unknown) =>
+  e instanceof AiError
+    ? e.kind === 'offline'
+      ? 'The AI server is not running. Start it with “npm run dev:server” and try again.'
+      : e.kind === 'timeout'
+        ? 'Gemini is taking too long right now. Try again, or pick one of the examples (they are instant).'
+        : 'Gemini is busy right now. Try again in a few seconds, or pick one of the examples.'
+    : 'The AI could not answer. Try again in a few seconds.';
+
+/**
+ * POST to the AI server. Retries once after a short pause (covers server restarts and brief Gemini overloads),
+ * and turns failures into an AiError the UI can explain.
+ */
+async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
+  let last: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (r.ok) return (await r.json()) as T;
+      // 502/504 from the dev proxy = the API server is down
+      last = r.status === 502 || r.status === 504 ? new AiError('offline', `HTTP ${r.status}`) : new AiError('busy', (await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`);
+    } catch (e: any) {
+      last = e?.name === 'TimeoutError' ? new AiError('timeout', 'timeout') : new AiError('offline', String(e?.message ?? e));
+      if (e?.name === 'TimeoutError') break; // already waited long enough
+    }
+    if (attempt === 0) await new Promise((res) => setTimeout(res, 3000));
+  }
+  throw last;
+}
+
 export interface DesignReply {
   idea: string;
   regionId: string;
@@ -47,30 +88,13 @@ export interface DesignReply {
 }
 
 /** The AI estimates a new action from the evidence; the server simulates it. */
-export async function designAction(idea: string, regionId: string, profileA: PatientProfile, profileB: PatientProfile): Promise<DesignReply> {
-  const r = await fetch('/api/design-action', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ idea, regionId, profileA, profileB }),
-    signal: AbortSignal.timeout(100000),
-  });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`);
-  return r.json();
-}
+export const designAction = (idea: string, regionId: string, profileA: PatientProfile, profileB: PatientProfile) =>
+  post<DesignReply>('/api/design-action', { idea, regionId, profileA, profileB }, 100000);
 
-export async function askAgent(
+export const askAgent = (
   messages: { role: 'user' | 'assistant'; text: string }[],
   ui: { regionId: string | null; interventions: string[]; profileA: PatientProfile; profileB: PatientProfile },
-): Promise<AgentReply> {
-  const r = await fetch('/api/agent', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ messages, ui }),
-    signal: AbortSignal.timeout(110000),
-  });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`);
-  return r.json();
-}
+) => post<AgentReply>('/api/agent', { messages, ui }, 110000);
 
 export interface NordicReply {
   practiceId: string;
@@ -87,13 +111,4 @@ export interface NordicReply {
 }
 
 /** The AI compares a Nordic practice: what it achieved there, and its estimated effect in Finland. */
-export async function compareNordic(practiceId: string): Promise<NordicReply> {
-  const r = await fetch('/api/nordic', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ practiceId }),
-    signal: AbortSignal.timeout(110000),
-  });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`);
-  return r.json();
-}
+export const compareNordic = (practiceId: string) => post<NordicReply>('/api/nordic', { practiceId }, 110000);

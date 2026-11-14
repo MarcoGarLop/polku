@@ -11,7 +11,7 @@ import {
   type PatientProfile,
   type RouteId,
 } from '@polku/sim';
-import { compareNordic, type NordicReply } from '../state/api';
+import { aiErrorText, compareNordic, type NordicReply } from '../state/api';
 import { openPlan } from '../state/plan';
 import { model, useSim } from '../state/sim';
 import { MATTI_A, MATTI_B, SECTIONS, useStore } from '../state/store';
@@ -295,8 +295,8 @@ function NordicSection() {
       const r = await compareNordic(id);
       registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
       setReplies((x) => ({ ...x, [id]: r }));
-    } catch {
-      setError('The AI is not reachable right now.');
+    } catch (e) {
+      setError(aiErrorText(e));
     } finally {
       setBusy(null);
     }

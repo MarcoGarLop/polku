@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { interventionFromAi, profileTotal, registerIntervention, type AiEstimate } from '@polku/sim';
-import { designAction, type DesignReply } from '../state/api';
+import { aiErrorText, designAction, type DesignReply } from '../state/api';
 import { model } from '../state/sim';
 import { useStore } from '../state/store';
 import { d0 } from './ui';
@@ -124,7 +124,7 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
       registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
       setReply(r);
     } catch (e: any) {
-      setError('The AI is not reachable right now. The recorded examples still work.');
+      setError(aiErrorText(e));
     } finally {
       setBusy(false);
     }

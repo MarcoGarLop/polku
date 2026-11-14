@@ -202,6 +202,66 @@
       },
       "model": "gemini-4-argon",
       "ms": 15373
+    },
+    "a nurse phone line that calls every patient referred for suspected lung cancer within two days|lappi": {
+      "idea": "A nurse phone line that calls every patient referred for suspected lung cancer within two days",
+      "regionId": "lappi",
+      "estimate": {
+        "id": "ai_a_nurse_phone_line_that_calls_every_pati",
+        "effects": [
+          {
+            "phase": "P3",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.05,
+            "mid": 0.15,
+            "high": 0.25
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0.03,
+            "mid": 0.08,
+            "high": 0.15
+          }
+        ],
+        "confidence": "low",
+        "rationale": "Nurse navigation studies (S16) show 10-19 day referral-to-treatment reductions. An immediate intake call streamlines P3 specialist booking and prepares P4 diagnostic tests. We conservatively project 5-25% reductions in P3 and 3-15% in P4, discounting for real-world implementation friction (S07) and limited scope [ROADMAP p.32].",
+        "evidence": [
+          "S16",
+          "S07",
+          "ROADMAP p.32"
+        ],
+        "roadmapAction": "1.2.3",
+        "roadmapPage": 32,
+        "label": "Nurse Referral Intake Line"
+      },
+      "trail": [
+        "Read the national cancer strategy, the roadmap and the evidence notes",
+        "Matched the idea to roadmap action 1.2.3 (p.32)",
+        "Estimated the effect on getting to a specialist, diagnosis (low confidence)",
+        "Ran the pathway simulation for Lapland, for Patient B and for all 22 regions"
+      ],
+      "results": {
+        "regionDaysSaved": {
+          "low": 1.2,
+          "mid": 3.3,
+          "high": 5.8
+        },
+        "equityGapClosed": 1.6,
+        "mattiB": {
+          "before": 225.5,
+          "after": 221.6
+        },
+        "gapAB": {
+          "before": 131.4,
+          "after": 130.8
+        },
+        "nationalDaysSavedIfEverywhere": 3.6
+      },
+      "model": "gemini-3.8-flash",
+      "ms": 44752
     }
   }
 }
