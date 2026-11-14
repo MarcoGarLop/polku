@@ -197,3 +197,15 @@ describe('AI-estimated effects', () => {
     expect(regionMeanTotal(model, 'lappi', ['ai_test_mobile_ct'])).toBeLessThan(regionMeanTotal(model, 'lappi'));
   });
 });
+
+describe('patient-days lost', () => {
+  it('stays meaningful when actions are active (compared with the national mean under the same actions)', () => {
+    const model = loadDefaultModel();
+    const ivs = ['fast_track', 'navigator'];
+    const withActions = simulateAll(model, ivs, { n: 500 });
+    expect(withActions.filter((r) => r.patientDaysLostPerYear > 0).length).toBeGreaterThan(3);
+    const tp = withActions.reduce((s, r) => s + r.population, 0);
+    const mean = withActions.reduce((s, r) => s + r.population * r.totalMeanDays, 0) / tp;
+    expect(Math.abs(mean - nationalMeanTotal(model, ivs))).toBeLessThan(0.5);
+  });
+});

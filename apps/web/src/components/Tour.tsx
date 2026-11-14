@@ -123,7 +123,7 @@ function StepPatients() {
     <Card
       title={
         <>
-          Two people, same lung cancer. One waits <span className="hl-b">{d0(c.gapDays)} days longer</span>.
+          Two people, same lung cancer. In our model, one waits <span className="hl-b">{d0(c.gapDays)} days longer</span>.
         </>
       }
       mapNote="Now the map shows how long Patient B would wait in each municipality. Lapland, where Patient B lives, is raised."
@@ -171,7 +171,7 @@ function StepWhere() {
       howKnow={<>The three stretches group the 8-step patient pathway AstraZeneca shared with all teams: from the first symptom to the first doctor, the time in primary care until the referral is sent, and the time in hospital from the referral to the first treatment.</>}
     >
       <p className="tour-text" style={{ marginTop: 0 }}>
-        The delay is not inside the hospital. It is in <b>getting there</b>: noticing the symptoms, getting a doctor's appointment, getting referred.
+        Most of the delay is not inside the hospital. It is in <b>getting there</b>: noticing the symptoms, getting a doctor's appointment, getting referred.
       </p>
       <JourneyBars a={c.a} b={c.b} />
     </Card>
@@ -182,7 +182,7 @@ const WHATIF_ROWS: { k: keyof WhatIf; label: string; detail: string }[] = [
   { k: 'route', label: 'Give them work health care', detail: 'instead of the public health centre' },
   { k: 'near', label: 'Move them near the hospital', detail: '10 km instead of 180 km' },
   { k: 'help', label: 'Someone helps them through the system', detail: 'no longer alone with appointments and referrals' },
-  { k: 'edu', label: 'Give them a university degree', detail: 'better at recognising symptoms early' },
+  { k: 'edu', label: 'Better health literacy', detail: 'they recognise the symptoms and act on them sooner' },
 ];
 const NONE: WhatIf = { route: false, near: false, edu: false, help: false };
 
@@ -197,7 +197,7 @@ function StepWhy() {
   const alone = useMemo(() => Object.fromEntries(WHATIF_ROWS.map((r) => [r.k, base - profileTotal(model, applyWhatIf(b, { ...NONE, [r.k]: true }))])), [b, base]);
   return (
     <Card
-      title="None of it is medical. Change one thing about Patient B and watch."
+      title="It's about access, not biology. Change one thing about Patient B and watch."
       mapNote="Every switch you flip recolours Patient B's Finland."
       howKnow={
         <>
@@ -364,7 +364,7 @@ function StepTrust() {
           <b>Real public data</b> for all 22 wellbeing counties and 292 municipalities.
         </li>
         <li>
-          <b>The AI never invents a number.</b> It estimates effects from cited evidence; the simulator calculates the days; Polku checks every figure.
+          <b>The AI never invents results.</b> It proposes effect sizes from cited evidence, with ranges; the simulator computes the days; Polku checks every figure.
         </li>
         <li>
           <b>Honest about uncertainty:</b> Patient B's gap is <b>{d0(sim.comparisonBase.gapDays)} days</b>, and still <b>{d0(cautiousGap)} days</b> with very cautious

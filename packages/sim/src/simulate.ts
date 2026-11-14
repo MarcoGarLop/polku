@@ -247,7 +247,8 @@ export function simulateRegion(
   const mean = mixtureMean(comps);
   const distance = mixtureMean(comps, 'distance');
   const total = sumPhases(mean);
-  const national = opts.nationalMean ?? nationalMeanTotal(model);
+  // compare against the national mean under the SAME interventions, otherwise every region looks below average
+  const national = opts.nationalMean ?? nationalMeanTotal(model, interventions);
 
   // Driver attribution: days this region would lose if the driver were at the national level.
   const drivers: { driver: string; extraDays: number }[] = [];
@@ -284,7 +285,7 @@ export function simulateRegion(
 }
 
 export function simulateAll(model: Model, interventions: string[] = [], opts: { n?: number } = {}): RegionResult[] {
-  const national = nationalMeanTotal(model);
+  const national = nationalMeanTotal(model, interventions);
   return model.regions.map((r) => simulateRegion(model, r.id, interventions, { n: opts.n ?? 2000, nationalMean: national }));
 }
 
