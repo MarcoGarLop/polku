@@ -262,6 +262,60 @@
       },
       "model": "gemini-3.8-flash",
       "ms": 44752
+    },
+    "a mobile ct unit that visits laplan every month|pohjois-pohjanmaa": {
+      "idea": "A mobile CT unit that visits Laplan every month",
+      "regionId": "pohjois-pohjanmaa",
+      "estimate": {
+        "id": "ai_a_mobile_ct_unit_that_visits_laplan_ever",
+        "effects": [
+          {
+            "phase": "P4",
+            "kind": "share_of_distance_days",
+            "appliesTo": "all",
+            "low": 0,
+            "mid": 0.03,
+            "high": 0.07
+          }
+        ],
+        "confidence": "low",
+        "rationale": "Danish RCT S17 found direct primary care CT access did not significantly shorten diagnostic delay. Furthermore, a monthly cadence creates waiting bottlenecks of up to 30 days, counteracting travel savings. It marginally mitigates distance-related logistics during P4 diagnostic work-up, but pathway reduction is negligible.",
+        "evidence": [
+          "S17",
+          "S02",
+          "ROADMAP p.13",
+          "ROADMAP p.98"
+        ],
+        "roadmapAction": "4.5.5",
+        "roadmapPage": 98,
+        "label": "Mobile CT unit in Lapland"
+      },
+      "trail": [
+        "Read the national cancer strategy, the roadmap and the evidence notes",
+        "Matched the idea to roadmap action 4.5.5 (p.98)",
+        "Estimated the effect on diagnosis (low confidence)",
+        "Ran the pathway simulation for North Ostrobothnia, for this patient and for all 22 regions"
+      ],
+      "results": {
+        "regionDaysSaved": {
+          "low": 0,
+          "mid": 0.1,
+          "high": 0.2
+        },
+        "equityGapClosed": 0.2,
+        "mattiB": {
+          "before": 112.4,
+          "after": 112.3
+        },
+        "gapAB": {
+          "before": 18.3,
+          "after": 18.2
+        },
+        "nationalDaysSavedIfEverywhere": 0
+      },
+      "model": "gemini-3.8-flash",
+      "ms": 26489,
+      "fallback": false
     }
   }
 }

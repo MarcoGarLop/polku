@@ -85,9 +85,14 @@ function PatientSection() {
   const km = patient.distanceKm ?? region.kmCentral;
   const steps = useMemo(() => profileBuildUp(model, patient), [patient]);
   const d = (k: BuildUpKey) => steps.find((s) => s.key === k)!.delta;
+  /** The same patient on the other entry route: how many days apart. */
+  const routeSwitch = useMemo(
+    () => Math.abs(profileTotal(model, patient) - profileTotal(model, { ...patient, route: patient.route === 'public' ? 'occupational_private' : 'public' })),
+    [patient],
+  );
   return (
     <>
-      <p className="sec-intro">Describe a lung cancer patient. Each choice shows how many days it adds or saves, and why.</p>
+      <p className="sec-intro">Describe a lung cancer patient. Each choice shows how many days it adds or saves compared with Finland's average patient, and why.</p>
       <div className="row presets">
         <span className="muted small">Examples:</span>
         <button className="btn small-btn" onClick={() => set({ patient: MATTI_B, selectedRegion: MATTI_B.regionId })}>
@@ -113,7 +118,24 @@ function PatientSection() {
         <input type="range" aria-label="Distance to hospital in km" min={5} max={400} step={5} value={km} onChange={(e) => setPatient({ distanceKm: +e.target.value })} />
       </Factor>
 
-      <Factor title="Where do they go first?" delta={d('route')} why={<>People with work health care see a doctor sooner. In Finnish lymphoma patients, treatment started after 123 days through work health care and 207 through the public route.</>}>
+      <Factor
+        title="Where do they go first?"
+        delta={d('route')}
+        why={
+          <>
+            People with work health care see a doctor sooner (Finnish lymphoma data: 123 vs 207 days to treatment).{' '}
+            {patient.route === 'public' ? (
+              <>
+                Most patients use the public route, so it adds little compared with the average, but <b>with work health care this patient would wait {d0(routeSwitch)} days less</b>.
+              </>
+            ) : (
+              <>
+                <b>On the public route, this patient would wait {d0(routeSwitch)} days more.</b>
+              </>
+            )}
+          </>
+        }
+      >
         <Chips<RouteId>
           label="First point of care"
           value={patient.route}
@@ -169,12 +191,27 @@ function RegionSection() {
     return [...plan.interventions, ...all.filter((id) => !plan.interventions.includes(id))];
   }, [plan]);
   const effects = useMemo(() => Object.fromEntries(ids.map((id) => [id, effectFor(patient, id)])), [ids, patient]);
+  // the strongest single action that is NOT in the plan, and why (effort)
+  const strongestOutside = useMemo(() => {
+    const out = ids.filter((id) => !plan.interventions.includes(id)).sort((a, b) => effects[b].mid - effects[a].mid)[0];
+    const bestIn = Math.max(...plan.interventions.map((id) => effects[id]?.mid ?? 0));
+    return out && effects[out].mid > bestIn + 0.5 ? out : null;
+  }, [ids, plan, effects]);
   return (
     <>
       <p className="sec-intro">
-        Actions from Finland's national cancer roadmap. Polku's AI estimated each one from the evidence and simulates its effect for this patient. The best
-        combination for {region.nameEn} comes first.
+        Actions from Finland's national cancer roadmap. Polku's AI estimated each one from the evidence and simulates its effect for this patient.
       </p>
+      <div className="plan-why">
+        <b>Recommended: the best combination for {region.nameEn} within a medium effort budget</b>, chosen to close the gap between patients.
+        {strongestOutside && (
+          <>
+            {' '}
+            {SHORT[strongestOutside]} saves the most on its own (−{d0(effects[strongestOutside].mid)} days) but needs a{' '}
+            {model.interventionsById.get(strongestOutside)!.effort} effort budget.
+          </>
+        )}
+      </div>
       <div className="row" style={{ gap: 6, marginBottom: 10 }}>
         <button className="btn small-btn primary" onClick={() => set({ interventions: Array.from(new Set([...active, ...plan.interventions])) })}>
           Apply the AI's recommendation
@@ -194,7 +231,7 @@ function RegionSection() {
               on={active.includes(id)}
               onClick={() => toggle(id)}
               title={SHORT[id] ?? iv.label}
-              detail={ACTION_DESC[id]}
+              detail={`${ACTION_DESC[id] ?? ''} ${iv.effort[0].toUpperCase()}${iv.effort.slice(1)} effort.`}
               effect={
                 <>
                   {recommended && <>Recommended by the AI · </>}
@@ -428,6 +465,13 @@ export function SimulatorPanel() {
   );
 }
 
+/** AstraZeneca's pathway steps, grouped from the model's five phases. */
+const STRETCHES = [
+  { key: 'detection', label: 'Detection', color: '#f59e0b' },
+  { key: 'referral', label: 'Referral', color: '#fbbf24' },
+  { key: 'hospital', label: 'Diagnosis & treatment', color: '#60a5fa' },
+] as const;
+
 const BUILD_LABEL = (k: BuildUpKey, p: PatientProfile, regionName: string, km: number) =>
   ({
     national: "Finland's average",
@@ -452,6 +496,32 @@ export function SimulatorResult() {
   const saved = base - r.totalMeanDays;
   const referralToTreatment = r.phases[2].meanDays + r.phases[3].meanDays + r.phases[4].meanDays;
 
+  /* comparison with Patient A (same actions, so the gap is like for like) */
+  const isA = (['regionId', 'route', 'education', 'navigationBarrier'] as const).every((k) => patient[k] === MATTI_A[k]) && Math.round(km) === MATTI_A.distanceKm;
+  const a = useMemo(() => simulateProfile(model, MATTI_A, active), [active]);
+  const gapA = r.totalMeanDays - a.totalMeanDays;
+
+  /* where in the pathway: detection / referral / diagnosis & treatment, this patient vs Patient A vs Finland's average */
+  const avgPhases = useMemo(() => {
+    const tp = sim.current.reduce((s, x) => s + x.population, 0);
+    return [0, 1, 2, 3, 4].map((i) => sim.current.reduce((s, x) => s + x.population * x.phases[i].meanDays, 0) / tp);
+  }, [sim.current]);
+  const parts = (ph: number[]) => [ph[0], ph[1], ph[2] + ph[3] + ph[4]];
+  const mine = parts(r.phases.map((x) => x.meanDays));
+  const avg = parts(avgPhases);
+  const pathRows = [
+    { label: 'This patient', parts: mine, cls: 'me' },
+    ...(isA ? [] : [{ label: 'Patient A', parts: parts(a.phases.map((x) => x.meanDays)), cls: 'a' }]),
+    { label: 'Finland avg', parts: avg, cls: 'avg' },
+  ];
+  const pathMax = Math.max(...pathRows.map((x) => x.parts[0] + x.parts[1] + x.parts[2]));
+  const extra = mine.map((v, i) => v - avg[i]);
+  const extraTotal = extra[0] + extra[1] + extra[2];
+  const pathNote =
+    extraTotal > 1
+      ? `${Math.round(Math.min(1, Math.max(0, (extra[0] + extra[1]) / extraTotal)) * 100)}% of this patient's extra days compared with the average are lost before a specialist ever sees them.`
+      : `This patient waits less than the average. Most of their time is still spent ${mine[0] >= Math.max(mine[1], mine[2]) ? 'before seeing a doctor' : mine[1] >= mine[2] ? 'in primary care' : 'in hospital'}.`;
+
   const max = Math.max(240, base + 10);
   const pos = (v: number) => `${Math.min(100, (v / max) * 100)}%`;
   const marks = [
@@ -468,7 +538,46 @@ export function SimulatorResult() {
       <div className="big-num">
         {d0(r.totalMeanDays)} <span>days from first symptom to treatment</span>
       </div>
+      {!isA && (
+        <div className="vs-a">
+          <span>
+            vs <b className="hl-a">Patient A</b> (works, near Oulu): <b>{d0(a.totalMeanDays)} days</b>
+          </span>
+          <span className={`vs-gap ${gapA >= 0.5 ? 'up' : 'down'}`}>
+            gap {gapA >= 0 ? '+' : '−'}
+            {d0(Math.abs(gapA))} days
+          </span>
+        </div>
+      )}
 
+      <div className="pathway" aria-label="Where in the care pathway the days are lost">
+        <div className="bench-title">Where the days are lost</div>
+        <div className="pw-legend">
+          {STRETCHES.map((s) => (
+            <span key={s.key}>
+              <i style={{ background: s.color }} />
+              {s.label}
+            </span>
+          ))}
+        </div>
+        {pathRows.map((row) => (
+          <div key={row.label} className={`pw-row ${row.cls}`}>
+            <span className="pw-name">{row.label}</span>
+            <div className="pw-track">
+              {row.parts.map((v, i) => (
+                <div key={i} className="pw-seg" style={{ width: `${(v / pathMax) * 100}%`, background: STRETCHES[i].color }} title={`${STRETCHES[i].label}: ${d0(v)} days`}>
+                  {(v / pathMax) * 100 > 11 ? d0(v) : ''}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div className="pw-note">{pathNote}</div>
+      </div>
+
+      <div className="bench-title" style={{ marginTop: 14 }}>
+        Why: how the days add up
+      </div>
       <div className="buildup" aria-label="How the days add up">
         {steps.map((s) => (
           <div key={s.key} className={`bu-row ${s.key === 'national' ? 'first' : ''}`}>

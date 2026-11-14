@@ -470,15 +470,53 @@ export interface BuildUpStep {
  * The patient's days as a running sum: Finland's average, then what their region, distance, entry route,
  * education and support each add. The last line equals the patient's own total.
  */
+/**
+ * How a patient's days add up from Finland's average, factor by factor. Each factor gets its fair share (exact
+ * Shapley value over the five factors: region, distance, entry route, education, support), so the result does not
+ * depend on the order in which factors are listed, and the shares sum exactly to the patient's total.
+ * `total` is the running sum in display order.
+ */
 export function profileBuildUp(model: Model, profile: PatientProfile, interventions: string[] = []): BuildUpStep[] {
   const p = resolveProfile(model, profile);
-  const totals: [BuildUpKey, number][] = [
-    ['national', nationalMeanTotal(model, interventions)],
-    ['region', expectedTotal(model, { regionId: p.regionId }, interventions)],
-    ['distance', expectedTotal(model, { regionId: p.regionId, distanceKm: p.distanceKm }, interventions)],
-    ['route', expectedTotal(model, { regionId: p.regionId, distanceKm: p.distanceKm, route: p.route }, interventions)],
-    ['education', expectedTotal(model, { regionId: p.regionId, distanceKm: p.distanceKm, route: p.route, education: p.education }, interventions)],
-    ['support', profileTotal(model, p, interventions)],
-  ];
-  return totals.map(([key, total], i) => ({ key, total, delta: i === 0 ? 0 : total - totals[i - 1][1] }));
+  const keys: BuildUpKey[] = ['region', 'distance', 'route', 'education', 'support'];
+  const tp = model.regions.reduce((s, r) => s + r.population, 0);
+  const cache = new Map<number, number>();
+  /** Expected days when only the factors in mask are known (unknown ones averaged over Finland's patient mix). */
+  const v = (mask: number): number => {
+    const hit = cache.get(mask);
+    if (hit != null) return hit;
+    const known = (k: BuildUpKey) => (mask >> keys.indexOf(k)) & 1;
+    const partial = (regionId: string): PartialProfile => ({
+      regionId,
+      ...(known('distance') ? { distanceKm: p.distanceKm } : {}),
+      ...(known('route') ? { route: p.route } : {}),
+      ...(known('education') ? { education: p.education } : {}),
+      ...(known('support') ? { navigationBarrier: p.navigationBarrier } : {}),
+    });
+    const val = known('region')
+      ? expectedTotal(model, partial(p.regionId), interventions)
+      : model.regions.reduce((s, r) => s + r.population * expectedTotal(model, partial(r.id), interventions), 0) / tp;
+    cache.set(mask, val);
+    return val;
+  };
+  const n = keys.length;
+  const fact = (k: number): number => (k <= 1 ? 1 : k * fact(k - 1));
+  const shares = keys.map((_, i) => {
+    let phi = 0;
+    for (let mask = 0; mask < 1 << n; mask++) {
+      if ((mask >> i) & 1) continue;
+      let size = 0;
+      for (let m = mask; m; m >>= 1) size += m & 1;
+      phi += ((fact(size) * fact(n - size - 1)) / fact(n)) * (v(mask | (1 << i)) - v(mask));
+    }
+    return phi;
+  });
+  const base = v(0);
+  const steps: BuildUpStep[] = [{ key: 'national', total: base, delta: 0 }];
+  let run = base;
+  keys.forEach((key, i) => {
+    run += shares[i];
+    steps.push({ key, total: run, delta: shares[i] });
+  });
+  return steps;
 }

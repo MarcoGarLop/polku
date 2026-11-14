@@ -236,3 +236,17 @@ describe('offline quick estimate', () => {
     expect(quickEstimate(model, 'paint the hospital walls blue').effects).toHaveLength(0);
   });
 });
+
+describe('build-up is order independent', () => {
+  it('route share is the same however the factors are listed, and shares sum to the total', () => {
+    const model = loadDefaultModel();
+    const b = { regionId: 'lappi', route: 'public', education: 'basic', navigationBarrier: true, distanceKm: 180 } as const;
+    const a = { regionId: 'pohjois-pohjanmaa', route: 'occupational_private', education: 'secondary', navigationBarrier: false, distanceKm: 8 } as const;
+    for (const p of [a, b]) {
+      const s = profileBuildUp(model, p);
+      expect(s[0].total + s.slice(1).reduce((x, y) => x + y.delta, 0)).toBeCloseTo(profileTotal(model, p), 6);
+    }
+    // work health care makes a patient faster than average
+    expect(profileBuildUp(model, a).find((x) => x.key === 'route')!.delta).toBeLessThan(0);
+  });
+});

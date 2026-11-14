@@ -83,3 +83,29 @@
 .ai-eyebrow { display: flex; align-items: center; gap: 6px; }
 .ai-spark { color: #c4b5fd; animation: spark 2.4s ease-in-out infinite; }
 @keyframes spark { 50% { opacity: 0.4; transform: scale(0.85); } }
+
+/* comparison with Patient A + where in the pathway */
+.vs-a { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13.5px; color: #c6d2e4; margin-top: 6px; }
+.vs-gap { font-weight: 800; }
+.vs-gap.up { color: #fb7185; }
+.vs-gap.down { color: var(--good); }
+.pathway { margin-top: 14px; }
+.pw-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); margin: 6px 0 4px; }
+.pw-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.pw-row { display: grid; grid-template-columns: 82px 1fr; gap: 8px; align-items: center; margin: 5px 0; font-size: 12.5px; }
+.pw-name { color: var(--muted); font-weight: 650; }
+.pw-row.me .pw-name { color: var(--text); font-weight: 800; }
+.pw-row.a .pw-name { color: #67e8f9; }
+.pw-track { display: flex; height: 18px; border-radius: 6px; overflow: hidden; background: rgba(148, 163, 184, 0.08); }
+.pw-row.me .pw-track { height: 24px; }
+.pw-seg { display: grid; place-items: center; font-size: 11.5px; font-weight: 800; color: #0b1220; transition: width 0.6s cubic-bezier(.2,.8,.2,1); }
+.pw-seg + .pw-seg { box-shadow: inset 2px 0 0 rgba(5, 9, 18, 0.6); }
+.pw-row.avg .pw-seg, .pw-row.a .pw-seg { opacity: 0.6; }
+.pw-note { font-size: 13px; line-height: 1.45; color: #c6d2e4; margin-top: 6px; }
+.buildup { margin-top: 6px; }
+.bu-row { padding: 4px 0; font-size: 13px; }
+.plan-why { font-size: 13px; line-height: 1.5; color: #c6d2e4; padding: 9px 11px; border-radius: 10px; background: rgba(167, 139, 250, 0.08); border: 1px solid rgba(167, 139, 250, 0.3); margin-bottom: 10px; }
+.plan-why b { color: var(--text); }
+
+/* simulator: legend sits bottom-centre, between the two panels */
+.mode-sim .legend-dock { right: auto; left: 50%; transform: translateX(-50%); bottom: 18px; }
