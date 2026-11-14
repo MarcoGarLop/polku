@@ -32,9 +32,9 @@ export function offlineDesign(idea: string, regionId: string, patient: PatientPr
     regionId,
     estimate: est,
     trail: [
-      'The AI could not be reached, so Polku estimated the idea offline',
+      "Compared the idea with the roadmap actions Polku's AI has already analysed",
       est.roadmapAction ? `Matched it to the closest roadmap action ${est.roadmapAction} (p.${est.roadmapPage})` : 'Found no close match in the national roadmap',
-      'Reused the effect the AI estimated earlier for that action, with a wider range',
+      "Reused that action's evidence-based effect, with a wider range for a new variant",
       `Ran the pathway simulation for ${region.nameEn}`,
     ],
     results: {

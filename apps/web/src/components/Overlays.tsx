@@ -67,25 +67,21 @@ export function Welcome() {
   };
   return (
     <div className="welcome" role="dialog" aria-labelledby="welcome-title">
-      <div className="welcome-card glass fade-in">
-        <div className="eyebrow">Lung cancer in Finland</div>
+      <div className="welcome-card glass fade-in hook">
         <h1 id="welcome-title">
-          Two people get the same lung cancer.
-          <br />
-          In our model, one starts treatment after <span className="hl-a">{months(c.a.totalMeanDays)} months</span>. The other after{' '}
-          <span className="hl-b">{months(c.b.totalMeanDays)}</span>.
+          <span className="hook-line">Two people get the same lung cancer.</span>
+          <span className="hook-line">
+            One starts treatment after <span className="hl-a">{months(c.a.totalMeanDays)} months</span>.
+          </span>
+          <span className="hook-line">
+            The other after <span className="hl-b">{months(c.b.totalMeanDays)}</span>.
+          </span>
         </h1>
-        <p className="welcome-sub">
-          Polku is an AI simulator for Finland's wellbeing services counties. Describe a patient, and it shows how long they wait, why, which actions would help
-          most, and what Finland could learn from its Nordic neighbours.
-        </p>
+        <p className="welcome-sub">An AI-powered simulator that identifies the gap, locates it in the care pathway and recommends what to do.</p>
         <div className="welcome-btns">
           <button ref={startRef} className="btn primary big" onClick={() => setMode('sim')}>
-            ▶ Build a patient <span className="muted-on-primary">· 4 short sections</span>
+            Start simulation
           </button>
-        </div>
-        <div className="welcome-foot">
-          Built for AstraZeneca's “Equal Care Across Finland” challenge · Public aggregated data only · Every number has a source · Not a medical device
         </div>
       </div>
     </div>

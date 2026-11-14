@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { DeckGL } from '@deck.gl/react';
 import { GeoJsonLayer, PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 import { TripsLayer } from '@deck.gl/geo-layers';
-import { AmbientLight, DirectionalLight, FlyToInterpolator, LightingEffect, type MapViewState, type PickingInfo } from '@deck.gl/core';
+import { AmbientLight, DirectionalLight, FlyToInterpolator, LightingEffect, WebMercatorViewport, type MapViewState, type PickingInfo } from '@deck.gl/core';
 import { phaseMeans, resolveProfile, sumPhases, type PhaseId, type RegionResult } from '@polku/sim';
 import { model, useSim } from '../state/sim';
 import { useLensProfile, useStore, type MapMetric } from '../state/store';
@@ -15,6 +15,16 @@ const OVERVIEW: MapViewState = { longitude: 23.2, latitude: 64.6, zoom: 4.55, pi
 const INTRO: MapViewState = { longitude: 20, latitude: 63.5, zoom: 3.4, pitch: 0, bearing: 0 };
 
 // Tuned so flat tops keep their true ramp colour (~1.0 total) while the raised walls get readable shading.
+export type NordicId = 'DNK' | 'NOR' | 'SWE';
+/** Capitals the light beam starts from, and each country's colour. */
+const NORDIC_CAPITALS: Record<NordicId, { name: string; pos: Position; color: [number, number, number] }> = {
+  DNK: { name: 'Copenhagen', pos: [12.57, 55.68], color: [251, 113, 133] },
+  NOR: { name: 'Oslo', pos: [10.75, 59.91], color: [96, 165, 250] },
+  SWE: { name: 'Stockholm', pos: [18.07, 59.33], color: [250, 204, 21] },
+};
+const BEAM_LOOP = 600;
+const BEAM_TRAVEL = 260;
+
 const lighting = new LightingEffect({
   ambient: new AmbientLight({ color: [255, 255, 255], intensity: 1.0 }),
   key: new DirectionalLight({ color: [255, 248, 240], intensity: 0.85, direction: [-3, -6, -9] }),
@@ -58,6 +68,7 @@ const shortName = (n: string) => n.replace(/ wellbeing services county/i, '');
 export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number]; spec: MetricSpec }) => void }) {
   const geo = useGeo();
   const buildMap = useStore((s) => s.buildMap);
+  const nordicFocus = useStore((s) => s.nordicFocus);
   const sim = useSim();
   const mode = useStore((s) => s.mode);
   const metric = useStore((s) => s.metric);
@@ -98,6 +109,20 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     const f = geo.regions.find((r) => r.properties.id === raised);
     if (!f) return;
     const [lon, lat] = f.properties.centroid;
+    // a Nordic practice is selected: frame both the neighbour's capital and the patient's region
+    const capital = nordicFocus ? NORDIC_CAPITALS[nordicFocus] : null;
+    if (capital) {
+      const vp = new WebMercatorViewport({ width: window.innerWidth, height: window.innerHeight });
+      const fit = vp.fitBounds(
+        [
+          [Math.min(capital.pos[0], lon) - 1, Math.min(capital.pos[1], lat) - 1],
+          [Math.max(capital.pos[0], lon) + 1, Math.max(capital.pos[1], lat) + 1.5],
+        ],
+        { padding: { left: 500, right: 420, top: 110, bottom: 130 } },
+      );
+      setViewState((v) => ({ ...v, longitude: fit.longitude, latitude: fit.latitude, zoom: Math.min(fit.zoom, 5.2), pitch: 38, bearing: -6, transitionDuration: dur(1800), transitionInterpolator: new FlyToInterpolator({ speed: 1.1 }) } as MapViewState));
+      return;
+    }
     const zoom = raised === 'lappi' ? 4.95 : ['helsinki', 'vantaa-kerava'].includes(raised) ? 7.3 : 6.1;
     // keep the region slightly right of centre so the story card on the left never covers it
     setViewState((v) => ({
@@ -105,7 +130,7 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
       transitionDuration: dur(1800), transitionInterpolator: new FlyToInterpolator({ speed: 1.1 }),
     } as MapViewState));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [raised, geo]);
+  }, [raised, geo, nordicFocus]);
 
   // Animation clock (journeys + breathing halo)
   useEffect(() => {
@@ -186,6 +211,31 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
   const raisedFeature = useMemo(() => (geo && raised ? geo.regions.find((r) => r.properties.id === raised) : undefined), [geo, raised]);
   const raisedRings = useMemo(() => (raisedFeature ? outerRings(raisedFeature.geometry) : []), [raisedFeature]);
 
+  /* Nordic beam: a light arc from the neighbour's capital to the patient's region (Learn from the Nordics) */
+  const beam = useMemo(() => {
+    if (!geo || !nordicFocus || !raisedFeature) return null;
+    const cap = NORDIC_CAPITALS[nordicFocus];
+    const to = raisedFeature.properties.centroid;
+    const top = patientMode
+      ? Math.max(0, ...geo.municipalities.filter((m) => m.properties.regionId === raised).map((m) => muniTop(m.properties.code, raised!)))
+      : regionTop(raised!);
+    const n = 48;
+    const dist = Math.hypot((to[0] - cap.pos[0]) * 50, (to[1] - cap.pos[1]) * 111);
+    const h = 60000 + dist * 220;
+    const path: [number, number, number][] = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      path.push([cap.pos[0] + (to[0] - cap.pos[0]) * t, cap.pos[1] + (to[1] - cap.pos[1]) * t, Math.sin(Math.PI * t) * h + top * t]);
+    }
+    // light pulses travelling along the arc, looping every BEAM_LOOP time units
+    const pulses = [0, 150, 300, 450].flatMap((t0) => {
+      const ts = path.map((_, i) => t0 + (BEAM_TRAVEL * i) / n);
+      return t0 + BEAM_TRAVEL > BEAM_LOOP ? [{ path, ts }, { path, ts: ts.map((t) => t - BEAM_LOOP) }] : [{ path, ts }];
+    });
+    return { cap, path, pulses, color: cap.color };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo, nordicFocus, raisedFeature, patientMode, muniDays, sim.byId, spec]);
+
   // the heavy first build waits until the intro animation has finished (it would freeze it)
   if (!geo || !buildMap) return <div className="map-loading">{buildMap ? 'Loading Finland…' : ''}</div>;
 
@@ -204,18 +254,68 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     new TextLayer({
       id: 'country-labels',
       data: [
-        { name: 'SWEDEN', pos: [15.6, 63.2] },
-        { name: 'NORWAY', pos: [12.4, 66.6] },
+        { name: 'SWEDEN', pos: [15.6, 63.2], id: 'SWE' },
+        { name: 'NORWAY', pos: [12.4, 66.6], id: 'NOR' },
+        { name: 'DENMARK', pos: [9.2, 56.3], id: 'DNK' },
       ],
       getPosition: (d: any) => d.pos,
       getText: (d: any) => d.name,
-      getSize: 12,
-      getColor: [90, 108, 138, 200],
+      getSize: (d: any) => (d.id === nordicFocus ? 15 : 12),
+      getColor: (d: any) => (d.id === nordicFocus ? [...NORDIC_CAPITALS[d.id as NordicId].color, 255] : [90, 108, 138, 200]),
       fontFamily: '"Inter Variable", Inter, system-ui, sans-serif',
       fontWeight: 700,
       fontSettings: { sdf: true },
       characterSet: 'auto',
+      updateTriggers: { getSize: [nordicFocus], getColor: [nordicFocus] },
     }),
+    // the neighbour lights up
+    beam &&
+      new GeoJsonLayer({
+        id: 'nordic-glow',
+        data: geo.context.filter((f) => f.properties.id === nordicFocus),
+        filled: true,
+        stroked: true,
+        getFillColor: [...beam.color, Math.round(45 + 30 * Math.sin(time / 40))] as any,
+        getLineColor: [...beam.color, 230] as any,
+        lineWidthMinPixels: 2.5,
+        updateTriggers: { getFillColor: [Math.round(time / 4), nordicFocus] },
+      }),
+    beam &&
+      new ScatterplotLayer({
+        id: 'nordic-capital',
+        data: [beam.cap],
+        getPosition: (d: any) => d.pos,
+        getRadius: (1 + 0.35 * Math.sin(time / 30)) * 22000,
+        radiusMinPixels: 8,
+        getFillColor: [...beam.color, 120] as any,
+        stroked: true,
+        getLineColor: [255, 255, 255, 230],
+        lineWidthMinPixels: 2,
+        updateTriggers: { getRadius: [Math.round(time / 3)] },
+      }),
+    beam &&
+      new PathLayer({
+        id: 'nordic-arc',
+        data: [beam.path],
+        getPath: (d: any) => d,
+        getColor: [...beam.color, 70] as any,
+        widthMinPixels: 3,
+        capRounded: true,
+      }),
+    beam &&
+      new TripsLayer({
+        id: 'nordic-beam',
+        data: beam.pulses,
+        getPath: (d: any) => d.path,
+        getTimestamps: (d: any) => d.ts,
+        getColor: [...beam.color.map((c) => Math.min(255, c + 60))] as any,
+        widthMinPixels: 5,
+        capRounded: true,
+        jointRounded: true,
+        fadeTrail: true,
+        trailLength: 120,
+        currentTime: time % BEAM_LOOP,
+      }),
     !patientMode &&
       new GeoJsonLayer({
         id: 'regions',

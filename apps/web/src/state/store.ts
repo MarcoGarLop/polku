@@ -43,6 +43,8 @@ interface State {
   showTable: boolean;
   /** Actions designed live with the AI (ids). */
   customActions: string[];
+  /** The neighbour lit up on the map while a Nordic practice is shown. */
+  nordicFocus: 'DNK' | 'NOR' | 'SWE' | null;
   /** Nordic practices the AI has estimated for Finland (ids). */
   nordicActions: string[];
   /** Video mode: hide all UI for the closing shot. */
@@ -81,6 +83,7 @@ export const useStore = create<State>((set, get) => ({
   showTable: false,
   customActions: [],
   nordicActions: [],
+  nordicFocus: null,
   clean: false,
   mapReady: false,
   introDone: SKIP_INTRO,
@@ -95,11 +98,11 @@ export const useStore = create<State>((set, get) => ({
     if (s.mode === 'sim' && id && id !== s.patient.regionId) set({ selectedRegion: id, patient: { ...s.patient, regionId: id, distanceKm: undefined } });
     else set({ selectedRegion: id });
   },
-  goSection: (n) => set({ section: Math.max(0, Math.min(SECTIONS.length - 1, n)), askOpen: false }),
+  goSection: (n) => set({ section: Math.max(0, Math.min(SECTIONS.length - 1, n)), askOpen: false, nordicFocus: null }),
   setMode: (mode) => {
     const s = get();
     if (mode === 'sim') set({ mode, section: 0, metric: 'patient', phase: 'ALL', selectedRegion: s.patient.regionId });
-    else set({ mode, selectedRegion: null, metric: 'days', interventions: [], askOpen: false });
+    else set({ mode, selectedRegion: null, metric: 'days', interventions: [], askOpen: false, nordicFocus: null });
   },
   setPatient: (patch) => set((s) => ({ patient: { ...s.patient, ...patch }, ...(patch.regionId ? { selectedRegion: patch.regionId } : {}) })),
 }));

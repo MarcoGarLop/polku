@@ -209,7 +209,7 @@ try {
   const ne = await read('ne_50m_admin_0_countries.geojson');
   for (const f of ne.features) {
     const a3 = f.properties.ADM0_A3;
-    if (!['SWE', 'NOR'].includes(a3)) continue; // keep the map calm: only the Nordic comparators
+    if (!['SWE', 'NOR', 'DNK'].includes(a3)) continue; // keep the map calm: only the Nordic comparators
     const geom = simplifyGeometry(f.geometry);
     // mainland only: drop Svalbard, Bear Island and Jan Mayen (they float at the top of the map)
     geom.coordinates = geom.coordinates.filter((poly) => {

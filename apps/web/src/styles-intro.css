@@ -63,3 +63,23 @@
 
 /* header mark */
 .logo-mark { flex: none; }
+
+/* welcome: a three-line hook, one sentence, one centred button */
+.welcome-card.hook { max-width: 820px; text-align: center; padding: 44px 48px 38px; }
+.welcome-card.hook h1 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.18; margin: 0 0 22px; }
+.hook-line { display: block; opacity: 0; transform: translateY(10px); animation: hookIn 0.55s cubic-bezier(.2,.8,.2,1) forwards; }
+.hook-line:nth-child(1) { animation-delay: 0.05s; }
+.hook-line:nth-child(2) { animation-delay: 0.45s; }
+.hook-line:nth-child(3) { animation-delay: 0.85s; }
+.welcome-card.hook .hl-a { color: #22d3ee; }
+.welcome-card.hook .hl-b { color: #f43f5e; }
+@keyframes hookIn { to { opacity: 1; transform: none; } }
+.welcome-card.hook .welcome-sub { margin: 0 auto 26px; max-width: 560px; font-size: 17px; opacity: 0; animation: hookIn 0.5s 1.25s ease-out forwards; }
+.welcome-card.hook .welcome-btns { justify-content: center; opacity: 0; animation: hookIn 0.5s 1.5s ease-out forwards; }
+.welcome-card.hook .btn.big { padding: 14px 34px; font-size: 16px; }
+@media (prefers-reduced-motion: reduce) { .hook-line, .welcome-card.hook .welcome-sub, .welcome-card.hook .welcome-btns { opacity: 1; transform: none; animation: none; } }
+
+/* each hook line on one line on laptops and projectors */
+.welcome-card.hook { max-width: 940px; }
+.welcome-card.hook h1 { font-size: clamp(24px, 2.5vw, 40px); }
+@media (min-width: 900px) { .hook-line { white-space: nowrap; } }

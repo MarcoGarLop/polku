@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   bestPortfolio,
   interventionFromAi,
@@ -172,7 +172,7 @@ function RegionSection() {
   return (
     <>
       <p className="sec-intro">
-        Actions from Finland's national cancer roadmap. Gemini estimated each one from the evidence; the simulator computes the days for this patient. The best
+        Actions from Finland's national cancer roadmap. Polku's AI estimated each one from the evidence and simulates its effect for this patient. The best
         combination for {region.nameEn} comes first.
       </p>
       <div className="row" style={{ gap: 6, marginBottom: 10 }}>
@@ -234,7 +234,7 @@ function IdeaSection() {
   return (
     <>
       <p className="sec-intro">
-        Describe any action in plain words. Gemini reads the strategy, the roadmap and the evidence, estimates what it would change, and says honestly when an idea is
+        Describe any action in plain words. Polku's AI reads the strategy, the roadmap and the evidence, estimates what it would change, and says honestly when an idea is
         unlikely to help.
       </p>
       <DesignBox regionId={patient.regionId} compact />
@@ -270,10 +270,10 @@ function IdeaSection() {
 /* ------------------------------------------------------------------ */
 
 const PRACTICES = [
-  { id: 'dk_cpp', flag: '🇩🇰', country: 'Denmark', name: 'Cancer patient pathways', line: 'Standard GP referral criteria, pre-booked tests and maximum times for each step.' },
-  { id: 'no_pakkeforlop', flag: '🇳🇴', country: 'Norway', name: 'Pakkeforløp', line: 'Fixed maximum times from referral to treatment, with named coordinators.' },
-  { id: 'se_svf', flag: '🇸🇪', country: 'Sweden', name: 'Standardised care pathways', line: 'A pathway starts at "well-founded suspicion", with lead-time targets.' },
-  { id: 'dk_direct_ct', flag: '🇩🇰', country: 'Denmark', name: 'Direct CT for GPs', line: 'Family doctors order a CT scan without a specialist referral.' },
+  { id: 'dk_cpp', iso: 'DNK' as const, flag: '🇩🇰', country: 'Denmark', name: 'Cancer patient pathways', line: 'Standard GP referral criteria, pre-booked tests and maximum times for each step.' },
+  { id: 'no_pakkeforlop', iso: 'NOR' as const, flag: '🇳🇴', country: 'Norway', name: 'Pakkeforløp', line: 'Fixed maximum times from referral to treatment, with named coordinators.' },
+  { id: 'se_svf', iso: 'SWE' as const, flag: '🇸🇪', country: 'Sweden', name: 'Standardised care pathways', line: 'A pathway starts at "well-founded suspicion", with lead-time targets.' },
+  { id: 'dk_direct_ct', iso: 'DNK' as const, flag: '🇩🇰', country: 'Denmark', name: 'Direct CT for GPs', line: 'Family doctors order a CT scan without a specialist referral.' },
 ];
 
 function NordicSection() {
@@ -287,21 +287,29 @@ function NordicSection() {
   const [error, setError] = useState<string | null>(null);
   const region = model.byId.get(patient.regionId)!;
 
+  // leaving the section switches the light off
+  useEffect(() => () => set({ nordicFocus: null }), [set]);
+
   const pick = async (id: string) => {
+    if (busy) return;
     setOpen(id);
     setError(null);
-    if (replies[id] || busy) return;
+    set({ nordicFocus: PRACTICES.find((p) => p.id === id)!.iso });
+    if (replies[id]) return;
     const use = (r: NordicReply) => {
       registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
       setReplies((x) => ({ ...x, [id]: r }));
     };
-    // the four practices were analysed by Gemini in advance and ship with the app: instant, works offline
-    const recorded = offlineNordic(id);
-    if (recorded) return use(recorded);
     setBusy(id);
+    const minThink = new Promise((res) => setTimeout(res, 1800)); // let the analysis be seen, even when instant
     try {
-      use(await compareNordic(id));
+      // the AI analysed the four practices in advance (shipped with the app); otherwise ask it live
+      const recorded = offlineNordic(id);
+      const r = recorded ?? (await compareNordic(id));
+      await minThink;
+      use(r);
     } catch (e) {
+      await minThink;
       setError(aiErrorText(e));
     } finally {
       setBusy(null);
@@ -316,7 +324,7 @@ function NordicSection() {
   return (
     <>
       <p className="sec-intro">
-        Pick something a Nordic neighbour already does. Gemini summarises what it achieved there, and estimates what it would change in {region.nameEn} for this
+        Pick something a Nordic neighbour already does. Polku's AI analyses what it achieved there, and estimates what it would change in {region.nameEn} for this
         patient.
       </p>
       <div className="nordic-grid">
@@ -335,7 +343,7 @@ function NordicSection() {
         ))}
       </div>
 
-      {busy && <AiTrail steps={[]} running />}
+      {busy && <AiTrail steps={[]} running runningSteps={['Reading what this practice achieved in its country', 'Comparing it with where Finland loses its days', 'Estimating its effect in ' + region.nameEn + ' and simulating this patient']} />}
       {error && <p className="muted">{error}</p>}
 
       {reply && e && (
@@ -454,7 +462,9 @@ export function SimulatorResult() {
 
   return (
     <section className="sim-result glass fade-in" aria-live="polite" aria-label="Result">
-      <div className="eyebrow">This patient waits</div>
+      <div className="eyebrow ai-eyebrow">
+        <span className="ai-spark" aria-hidden>✦</span> Polku AI · this patient waits
+      </div>
       <div className="big-num">
         {d0(r.totalMeanDays)} <span>days from first symptom to treatment</span>
       </div>

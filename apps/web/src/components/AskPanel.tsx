@@ -80,7 +80,7 @@ export function AnswerBody({ reply }: { reply: AgentReply }) {
         ) : (
           <span className="verify warn">⚠ Not traced: {reply.verification.unverified.join(', ')}</span>
         )}
-        <span className="faint">Gemini · {reply.mode === 'demo-cache' ? 'recorded answer' : `${(reply.ms / 1000).toFixed(0)} s`}</span>
+        <span className="faint">Polku AI · {reply.mode === 'demo-cache' ? 'recorded answer' : `${(reply.ms / 1000).toFixed(0)} s`}</span>
       </div>
     </>
   );

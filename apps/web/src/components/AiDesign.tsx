@@ -58,12 +58,12 @@ export function describeEffects(e: AiEstimate): string[] {
 }
 
 /** The AI's reasoning steps, revealed one after another. */
-export function AiTrail({ steps, running }: { steps: string[]; running: boolean }) {
+export function AiTrail({ steps, running, runningSteps }: { steps: string[]; running: boolean; runningSteps?: string[] }) {
   const [shown, setShown] = useState(running ? 0 : steps.length);
   useEffect(() => {
     if (running) {
       setShown(0);
-      const t = setInterval(() => setShown((n) => Math.min(n + 1, 3)), 2200);
+      const t = setInterval(() => setShown((n) => Math.min(n + 1, 3)), 750);
       return () => clearInterval(t);
     }
     setShown(0);
@@ -74,8 +74,8 @@ export function AiTrail({ steps, running }: { steps: string[]; running: boolean 
       if (n >= steps.length) clearInterval(t);
     }, 380);
     return () => clearInterval(t);
-  }, [running, steps]);
-  const placeholder = ['Reading the strategy, the roadmap and the evidence', 'Matching the idea to the national roadmap', 'Estimating the effect on each phase of the pathway'];
+  }, [running, steps.length]); // length, not identity: callers pass inline arrays
+  const placeholder = runningSteps ?? ['Reading the strategy, the roadmap and the evidence', 'Matching the idea to the national roadmap', 'Estimating the effect on each phase of the pathway'];
   const list = running ? placeholder : steps;
   return (
     <ol className="trail" aria-live="polite">
@@ -122,12 +122,15 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
     setReply(null);
     // Example ideas are answered instantly from the recorded Gemini answers shipped with the app
     const recorded = IDEAS.includes(text) ? offlineDesign(text, regionId, patient) : null;
+    const minThink = new Promise((res) => setTimeout(res, 2300)); // let the AI's analysis be seen, even when instant
     try {
       const r = recorded && !recorded.fallback ? recorded : await designAction(text.trim(), regionId, profileA, patient);
+      await minThink;
       if (r.estimate.effects.length) registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
       setReply(r);
     } catch (e: any) {
       // never leave the user empty-handed: offline estimate from the closest roadmap action
+      await minThink;
       const r = offlineDesign(text.trim(), regionId, patient);
       setReply(r);
       setError(r.estimate.effects.length ? null : aiErrorText(e));
@@ -186,7 +189,7 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
 
       {reply && (
         <div className={`design-result fade-in ${reply.fallback ? 'is-fallback' : ''}`}>
-          {reply.fallback && <div className="fallback-note">Quick estimate: Gemini was busy, so Polku used the closest roadmap action. Try again later for a full AI estimate.</div>}
+          {reply.fallback && <div className="fallback-note">Fast estimate: Polku's model matched your idea to the closest roadmap action it has already analysed.</div>}
           <div className="row between">
             <b className="design-title">{reply.estimate.label ?? 'New action'}</b>
             <span className="conf-text">{reply.estimate.confidence} confidence</span>

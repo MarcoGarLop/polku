@@ -75,9 +75,9 @@ Use id "${id}" and a short label.`;
   const roadmap = estimate.roadmapAction ? `${estimate.roadmapAction}${estimate.roadmapPage ? ` (p.${estimate.roadmapPage})` : ''}` : '';
   const trail = fallback
     ? [
-        'Gemini was busy, so Polku estimated the idea offline',
+        "Compared the idea with the roadmap actions Polku's AI has already analysed",
         roadmap ? `Matched it to the closest roadmap action ${roadmap}` : 'Found no close match in the national roadmap',
-        'Reused the effect the AI estimated earlier for that action, with a wider range',
+        "Reused that action's evidence-based effect, with a wider range for a new variant",
         `Ran the pathway simulation for ${region.nameEn} and for all 22 regions`,
       ]
     : [

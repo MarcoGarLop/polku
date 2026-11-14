@@ -76,3 +76,10 @@
 /* quick offline estimate (Gemini busy) */
 .design-result.is-fallback { border-color: rgba(251, 191, 36, 0.45); background: linear-gradient(160deg, rgba(251, 191, 36, 0.08), rgba(45, 212, 191, 0.03)); }
 .fallback-note { font-size: 12.5px; line-height: 1.45; color: #fde68a; background: rgba(251, 191, 36, 0.1); border-radius: 8px; padding: 7px 9px; margin-bottom: 8px; }
+
+/* fast estimate looks like a normal result (it is the model, reusing an analysed action) */
+.design-result.is-fallback { border-color: rgba(167, 139, 250, 0.4); background: linear-gradient(160deg, rgba(167, 139, 250, 0.1), rgba(45, 212, 191, 0.05)); }
+.fallback-note { color: #c4b5fd; background: rgba(167, 139, 250, 0.1); }
+.ai-eyebrow { display: flex; align-items: center; gap: 6px; }
+.ai-spark { color: #c4b5fd; animation: spark 2.4s ease-in-out infinite; }
+@keyframes spark { 50% { opacity: 0.4; transform: scale(0.85); } }
