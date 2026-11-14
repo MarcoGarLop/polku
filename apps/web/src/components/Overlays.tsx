@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSim } from '../state/sim';
 import { useStore } from '../state/store';
 import { rgbCss } from '../map/colors';
@@ -65,9 +65,24 @@ export function Welcome() {
   const setMode = useStore((s) => s.setMode);
   const goStep = useStore((s) => s.goStep);
   const startRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => startRef.current?.focus(), []);
+  // in video mode the card waits for the opening title (4.2 s) before appearing
+  const video = new URLSearchParams(location.search).has('video');
+  const [show, setShow] = useState(!video);
+  useEffect(() => {
+    if (!video) return;
+    const t = setTimeout(() => setShow(true), 4200);
+    return () => clearTimeout(t);
+  }, [video]);
+  useEffect(() => {
+    if (show) startRef.current?.focus({ preventScroll: true });
+  }, [show]);
   const c = sim.comparisonBase;
-  const months = (d: number) => Math.round(d / 30);
+  if (!show) return null;
+  // rounded to the nearest half month (225 days → 7.5, not "8")
+  const months = (d: number) => {
+    const m = Math.round((d / 30.4) * 2) / 2;
+    return Number.isInteger(m) ? String(m) : m.toFixed(1);
+  };
   return (
     <div className="welcome" role="dialog" aria-labelledby="welcome-title">
       <div className="welcome-card glass fade-in">

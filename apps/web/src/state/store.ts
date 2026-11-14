@@ -69,6 +69,8 @@ interface State {
   showTable: boolean;
   /** Actions designed live with the AI (ids). */
   customActions: string[];
+  /** Video mode: hide all UI for the closing shot. */
+  clean: boolean;
   askOpen: boolean;
   set: (patch: Partial<State>) => void;
   toggleIntervention: (id: string) => void;
@@ -113,6 +115,7 @@ export const useStore = create<State>((set, get) => ({
   showAssumptions: false,
   showTable: false,
   customActions: [],
+  clean: false,
   askOpen: false,
   set: (patch) => set(patch),
   toggleIntervention: (id) =>

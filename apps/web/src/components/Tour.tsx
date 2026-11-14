@@ -179,7 +179,7 @@ function StepWhere() {
 }
 
 const WHATIF_ROWS: { k: keyof WhatIf; label: string; detail: string }[] = [
-  { k: 'route', label: 'Give them work health care', detail: 'instead of the public health centre' },
+  { k: 'route', label: 'The fast lane of work health care', detail: 'as fast as occupational or private care' },
   { k: 'near', label: 'Move them near the hospital', detail: '10 km instead of 180 km' },
   { k: 'help', label: 'Someone helps them through the system', detail: 'no longer alone with appointments and referrals' },
   { k: 'edu', label: 'Better health literacy', detail: 'they recognise the symptoms and act on them sooner' },

@@ -9,13 +9,18 @@ import { AskDrawer } from './components/AskPanel';
 import { Assumptions } from './components/Assumptions';
 import { SafeBoundary } from './components/SafeBoundary';
 
+/** `?video` turns on video mode: the recorder drives the store and can hide the UI for the closing shot. */
+export const VIDEO_MODE = typeof location !== 'undefined' && new URLSearchParams(location.search).has('video');
+if (VIDEO_MODE) (window as any).__polku = useStore;
+
 export default function App() {
   const mode = useStore((s) => s.mode);
+  const clean = useStore((s) => s.clean);
   const [legend, setLegend] = useState<{ domain: [number, number]; spec: MetricSpec }>({ domain: [130, 180], spec: metricSpec('days', 'ALL') });
   const onDomain = useCallback((d: { domain: [number, number]; spec: MetricSpec }) => setLegend(d), []);
   return (
     <SimProvider>
-      <div className={`app mode-${mode}`}>
+      <div className={`app mode-${mode}${VIDEO_MODE ? ' video' : ''}${clean ? ' video-clean' : ''}`}>
         <a className="skip" href="#main-content">
           Skip to content
         </a>

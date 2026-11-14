@@ -61,3 +61,11 @@
 .jb-extra > div { border: 1px solid; border-radius: 10px; padding: 8px 10px; background: rgba(148, 163, 184, 0.04); }
 .jb-extra b { display: block; font-size: 24px; line-height: 1.1; }
 .jb-extra span { font-size: 12.5px; color: #c6d2e4; }
+
+/* video mode: closing shot with the map only */
+.app.video-clean .header, .app.video-clean main, .app.video-clean .legend-dock, .app.video-clean .stepper { opacity: 0; transition: opacity 0.9s ease; pointer-events: none; }
+.app.video .welcome-card { animation: fadeUp 0.8s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+/* click pulse used by the video recorder */
+.vpulse { position: fixed; z-index: 99; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; border: 3px solid #5eead4; box-shadow: 0 0 24px rgba(94,234,212,.7); pointer-events: none; animation: vpulse 0.75s ease-out forwards; }
+@keyframes vpulse { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
