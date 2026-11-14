@@ -181,16 +181,6 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo, raised, hospitalPos, patientMode, muniDays, sim.byId, spec]);
 
-  const extremes = useMemo(() => {
-    if (!geo) return [];
-    const sorted = [...sim.base].sort((a, b) => b.totalMeanDays - a.totalMeanDays);
-    const pick = (r: RegionResult, color: [number, number, number, number], tag: string) => {
-      const f = geo.regions.find((x) => x.properties.id === r.regionId)!;
-      return { pos: f.properties.centroid, color, text: `${tag}: ${shortName(r.nameEn)} · ${Math.round(r.totalMeanDays)} days` };
-    };
-    return [pick(sorted[0], [251, 113, 133, 255], 'Slowest'), pick(sorted[sorted.length - 1], [45, 212, 191, 255], 'Fastest')];
-  }, [geo, sim.base]);
-
   const raisedFeature = useMemo(() => (geo && raised ? geo.regions.find((r) => r.properties.id === raised) : undefined), [geo, raised]);
   const raisedRings = useMemo(() => (raisedFeature ? outerRings(raisedFeature.geometry) : []), [raisedFeature]);
 
@@ -279,40 +269,6 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
         getColor: [255, 255, 255, 220],
         widthMinPixels: 2,
         updateTriggers: { getPath: [sim.current, spec, patientMode, raised] },
-      }),
-    // Tour step 1: point the eye at the slowest and the fastest region (dot first, label on top of it)
-    mode === 'tour' &&
-      step === 0 &&
-      new ScatterplotLayer({
-        id: 'extremes-dots',
-        data: extremes,
-        getPosition: (d: any) => d.pos,
-        getRadius: 6,
-        radiusUnits: 'pixels',
-        getFillColor: (d: any) => d.color,
-        stroked: true,
-        getLineColor: [5, 9, 18, 255],
-        lineWidthMinPixels: 2,
-      }),
-    mode === 'tour' &&
-      step === 0 &&
-      new TextLayer({
-        id: 'extremes',
-        data: extremes,
-        getPosition: (d: any) => d.pos,
-        getText: (d: any) => d.text,
-        getSize: 14,
-        getColor: (d: any) => d.color,
-        fontFamily: '"Inter Variable", Inter, system-ui, sans-serif',
-        fontWeight: 700,
-        characterSet: 'auto',
-        background: true,
-        getBackgroundColor: [7, 11, 20, 215],
-        getBorderColor: (d: any) => d.color,
-        getBorderWidth: 1.5,
-        backgroundPadding: [8, 5, 8, 5],
-        getTextAnchor: 'start',
-        getPixelOffset: [24, 0],
       }),
     showFlows &&
       trips.length > 0 &&

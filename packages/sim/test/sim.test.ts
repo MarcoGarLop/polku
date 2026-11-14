@@ -16,6 +16,8 @@ import {
   simulateAll,
   simulateProfile,
   simulateRegion,
+  registerIntervention,
+  interventionFromAi,
   type PatientProfile,
 } from '../src';
 import { loadDefaultModel } from '../src/data';
@@ -166,5 +168,32 @@ describe('performance', () => {
     const t0 = performance.now();
     simulateAll(model, ['fast_track', 'navigator'], { n: 2000 });
     expect(performance.now() - t0).toBeLessThan(300);
+  });
+});
+
+describe('AI-estimated effects', () => {
+  it('default model uses Gemini estimates for every action except the minimum dataset', () => {
+    const model = loadDefaultModel();
+    for (const iv of model.params.interventions) {
+      if (iv.id === 'min_dataset') expect(iv.estimatedBy).toBe('team');
+      else if (!iv.custom) {
+        expect(iv.estimatedBy).toBe('ai');
+        expect(iv.rationale?.length).toBeGreaterThan(20);
+        for (const e of iv.effects) {
+          const r = e.reduction ?? e.distanceReduction ?? 0;
+          expect(r).toBeLessThanOrEqual(0.6);
+          expect(r).toBeGreaterThanOrEqual(0);
+        }
+      }
+    }
+  });
+
+  it('accepts an action designed live and simulates it', () => {
+    const model = loadDefaultModel();
+    registerIntervention(
+      model,
+      interventionFromAi({ id: 'ai_test_mobile_ct', label: 'Mobile CT', confidence: 'low', rationale: 'test', evidence: ['S17'], roadmapAction: '2.5.2', roadmapPage: 52, effects: [{ phase: 'P4', kind: 'share_of_distance_days', appliesTo: 'all', low: 0.1, mid: 0.3, high: 0.5 }] }, { custom: true }),
+    );
+    expect(regionMeanTotal(model, 'lappi', ['ai_test_mobile_ct'])).toBeLessThan(regionMeanTotal(model, 'lappi'));
   });
 });

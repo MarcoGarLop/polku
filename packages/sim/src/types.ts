@@ -50,6 +50,35 @@ export interface Intervention {
   roadmapActions: RoadmapRef[];
   costNote: string;
   effort: Effort;
+  /** Who estimated the effect sizes: Gemini from the evidence, or the team's prior. */
+  estimatedBy?: 'ai' | 'team';
+  rationale?: string;
+  citations?: string[];
+  aiModel?: string;
+  /** The team's original effects, kept for comparison when the AI estimate is used. */
+  prior?: InterventionEffect[];
+  /** Designed live by the user with the AI. */
+  custom?: boolean;
+}
+
+/** Effect description returned by the AI (mechanism and size, never final days). */
+export interface AiEffect {
+  phase: PhaseId;
+  kind: 'share_of_phase_days' | 'share_of_distance_days';
+  appliesTo: 'all' | 'public_route' | 'basic_education' | 'navigation_barrier';
+  low: number;
+  mid: number;
+  high: number;
+}
+export interface AiEstimate {
+  id: string;
+  label?: string;
+  effects: AiEffect[];
+  confidence: 'high' | 'medium' | 'low';
+  rationale: string;
+  evidence: string[];
+  roadmapAction: string;
+  roadmapPage: number;
 }
 
 export interface DriverDef {

@@ -1,7 +1,7 @@
 export * from './types';
-export { parseParams, parseRegions } from './params';
+export { parseParams, parseRegions, aiEffectsToEffects, interventionFromAi } from './params';
 export { mulberry32 } from './rng';
-export { buildModel, phaseMeans, resolveProfile, sumPhases, type Model, type RegionModel } from './model';
+export { buildModel, phaseMeans, resolveProfile, sumPhases, registerIntervention, type Model, type RegionModel } from './model';
 export {
   simulateProfile,
   compareProfiles,

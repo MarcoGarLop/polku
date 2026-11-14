@@ -22,6 +22,14 @@ Según la documentación consultada el 13-nov-2026 en [ai.google.dev](https://ai
 - **Error 503** (modelo saturado, típico en modelos recién lanzados) → el servidor debe **reintentar con espera exponencial (2–3 intentos) y después pasar a un modelo de respaldo** (`GEMINI_FALLBACK_MODEL`) y, en última instancia, a la caché del modo demo.
 - Se puede compartir la cuenta en el equipo, pero lo ideal es que cada miembro use la suya.
 
+## ⭐ La IA en el centro (14-nov, noche) — manda sobre todo lo demás
+Gemini es **la analista**; el simulador es su herramienta de cálculo. Nunca da días "de cabeza".
+1. **Estima los efectos de las 9 acciones** (`apps/server/src/estimate-all.ts` → `data/seed/ai_effects.json`): lee la estrategia + hoja de ruta + el resumen de evidencia (`docs/05`), **sin ver nuestros porcentajes**, y devuelve por acción: fases afectadas, a quién, rango (pesimista/central/optimista), confianza, razonamiento y fuentes. Validado (fases válidas, ≤60 %). El simulador usa estas estimaciones; las nuestras quedan como `prior` para comparar. Ejemplos: fast-track −15/−25 % (rebajado por el 36 % de cumplimiento sueco); TAC directo −3 % (ECA danés sin efecto).
+2. **Estima ideas nuevas en vivo** (`/api/design-action`, `design.ts`): el usuario describe una acción → Gemini (flash, ~15 s) estima mecanismo y rango + acción de la hoja de ruta → el simulador calcula días para la región, Matti B y toda Finlandia → se puede añadir al plan. Tres ejemplos grabados en `demo/designed-actions.json` (argon). Dice cuándo una idea no ayuda (TAC móvil mensual: −1,5 d).
+3. **Recomienda** (mejor combinación por presupuesto con sus estimaciones) y **responde preguntas** (agente con herramientas, verificador de cifras).
+4. Rastro de razonamiento visible en la UI (leyó → emparejó con la hoja de ruta → estimó → simuló).
+Regenerar estimaciones: `cd apps/server && node --env-file=../../.env --import tsx src/estimate-all.ts`.
+
 ## ✅ Implementado (14-nov) — manda sobre lo de abajo
 - **Contexto largo:** estrategia + hoja de ruta completas (~152k tokens, finés) en la instrucción de sistema de cada llamada. `gemini-4-argon` **no admite caché explícita** (error 400), así que usamos la **caché implícita** de prefijo: medido 26 s en frío → ~7 s en caliente con 146k tokens cacheados. El servidor "calienta" la caché al arrancar (`warmUp`). El prefijo (sistema + herramientas) no debe cambiar entre llamadas.
 - **Modelos:** chat con `gemini-3.8-flash` (12–25 s para respuestas con 2–4 herramientas; argon tardaba ~55 s). `?speed=deep` o `AGENT_SPEED=deep` usa argon. El plan de una página usa argon (~19 s) con salida estructurada.

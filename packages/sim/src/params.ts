@@ -1,5 +1,6 @@
 import {
   PHASES,
+  type AiEstimate,
   type Confidence,
   type DriverDef,
   type Effort,
@@ -52,7 +53,45 @@ function parseIntervention(raw: any): Intervention {
   };
 }
 
-export function parseParams(raw: any): Params {
+/** Turn an AI estimate (mechanism + size) into simulator effects. */
+export function aiEffectsToEffects(effects: AiEstimate['effects']): InterventionEffect[] {
+  return effects.map((f) => {
+    const when =
+      f.appliesTo === 'public_route'
+        ? { route: 'public' as const }
+        : f.appliesTo === 'basic_education'
+          ? { education: 'basic' as const }
+          : f.appliesTo === 'navigation_barrier'
+            ? { navigationBarrier: true }
+            : undefined;
+    const e: InterventionEffect = { phase: f.phase, range: [f.low, f.high], ...(when ? { when } : {}) };
+    if (f.kind === 'share_of_distance_days') e.distanceReduction = f.mid;
+    else e.reduction = f.mid;
+    return e;
+  });
+}
+
+/** Build a full intervention from an AI estimate (used for actions designed live by the user). */
+export function interventionFromAi(est: AiEstimate, opts: { model?: string; custom?: boolean; effort?: Effort } = {}): Intervention {
+  return {
+    id: est.id,
+    label: est.label ?? est.id,
+    effects: aiEffectsToEffects(est.effects),
+    evidence: est.rationale,
+    sourceIds: est.evidence.filter((s) => /^S\d+$/.test(s)),
+    confidence: est.confidence,
+    roadmapActions: est.roadmapAction ? [{ id: est.roadmapAction, page: est.roadmapPage }] : [],
+    costNote: '',
+    effort: opts.effort ?? 'medium',
+    estimatedBy: 'ai',
+    rationale: est.rationale,
+    citations: est.evidence,
+    aiModel: opts.model,
+    custom: opts.custom,
+  };
+}
+
+export function parseParams(raw: any, ai?: { model?: string; estimates?: AiEstimate[] }): Params {
   const phases = raw.phases.map((p: any) => ({
     id: p.id,
     label: p.label,
@@ -102,7 +141,13 @@ export function parseParams(raw: any): Params {
     distanceMinKm: pf.distance.min_km ?? 5,
     fallbackDistanceKm: pf.distance.fallback_region_km ?? 40,
     drivers,
-    interventions: raw.interventions.map(parseIntervention),
+    interventions: raw.interventions.map((r: any) => {
+      const iv = parseIntervention(r);
+      const est = ai?.estimates?.find((e) => e.id === iv.id);
+      if (!est || !est.effects?.length) return { ...iv, estimatedBy: 'team' as const };
+      // Gemini's evidence-based estimate replaces the team prior; the prior is kept for comparison.
+      return { ...iv, effects: aiEffectsToEffects(est.effects), prior: iv.effects, estimatedBy: 'ai' as const, rationale: est.rationale, citations: est.evidence, confidence: est.confidence, aiModel: ai?.model };
+    }),
     steps: raw.pathway_steps.steps,
     segments,
     prioritisation: {

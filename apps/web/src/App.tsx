@@ -40,7 +40,6 @@ export default function App() {
             <Legend domain={legend.domain} spec={legend.spec} />
           </div>
         )}
-        <div className="footer">Decision support for planners · Public aggregated data only · Not a medical device</div>
         <SafeBoundary label="Ask Polku">
           <AskDrawer />
         </SafeBoundary>

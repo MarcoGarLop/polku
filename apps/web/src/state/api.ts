@@ -1,4 +1,4 @@
-import type { PatientProfile } from '@polku/sim';
+import type { AiEstimate, PatientProfile } from '@polku/sim';
 
 export interface AgentReply {
   text: string;
@@ -27,6 +27,35 @@ export async function getHealth(): Promise<Health | null> {
   } catch {
     return null;
   }
+}
+
+export interface DesignReply {
+  idea: string;
+  regionId: string;
+  estimate: AiEstimate;
+  trail: string[];
+  results: {
+    regionDaysSaved: { low: number; mid: number; high: number };
+    equityGapClosed: number;
+    mattiB: { before: number; after: number };
+    gapAB: { before: number; after: number };
+    nationalDaysSavedIfEverywhere: number;
+  };
+  model: string;
+  ms: number;
+  cached?: boolean;
+}
+
+/** The AI estimates a new action from the evidence; the server simulates it. */
+export async function designAction(idea: string, regionId: string, profileA: PatientProfile, profileB: PatientProfile): Promise<DesignReply> {
+  const r = await fetch('/api/design-action', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ idea, regionId, profileA, profileB }),
+    signal: AbortSignal.timeout(100000),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`);
+  return r.json();
 }
 
 export async function askAgent(

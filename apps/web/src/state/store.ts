@@ -30,7 +30,7 @@ export const TOUR_STEPS = [
   { id: 'where', label: 'Where', ask: 'Locate it in the pathway' },
   { id: 'why', label: 'Why', ask: 'Explain it' },
   { id: 'act', label: 'What to do', ask: 'Recommend actions' },
-  { id: 'ai', label: 'Ask the AI', ask: 'AI-driven, evidence-based' },
+  { id: 'ai', label: 'Your idea', ask: 'AI-driven, evidence-based' },
   { id: 'trust', label: 'Trust', ask: 'Reliable, transparent data' },
 ] as const;
 
@@ -67,6 +67,8 @@ interface State {
   whatIf: WhatIf;
   showAssumptions: boolean;
   showTable: boolean;
+  /** Actions designed live with the AI (ids). */
+  customActions: string[];
   askOpen: boolean;
   set: (patch: Partial<State>) => void;
   toggleIntervention: (id: string) => void;
@@ -110,6 +112,7 @@ export const useStore = create<State>((set, get) => ({
   whatIf: NO_WHATIF,
   showAssumptions: false,
   showTable: false,
+  customActions: [],
   askOpen: false,
   set: (patch) => set(patch),
   toggleIntervention: (id) =>

@@ -1,0 +1,45 @@
+/* =====================================================================
+   AI-centred pieces: reasoning trail, idea → estimate → simulation, "How do we know?"
+   ===================================================================== */
+.how { margin-top: 10px; }
+.how-btn { border: 0; background: none; color: #93c5fd; font-size: 13px; font-weight: 700; padding: 4px 0; cursor: pointer; }
+.how-btn:hover { color: #bfdbfe; }
+.how-body { font-size: 13.5px; line-height: 1.55; color: #c6d2e4; padding: 10px 12px; border-radius: 10px; background: rgba(96, 165, 250, 0.07); border: 1px solid rgba(96, 165, 250, 0.2); margin-top: 6px; }
+
+.ai-tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 2px 7px; border-radius: 6px; margin-left: 4px; vertical-align: 1px;
+  color: #e9d5ff; background: linear-gradient(90deg, rgba(167, 139, 250, 0.25), rgba(45, 212, 191, 0.2)); border: 1px solid rgba(167, 139, 250, 0.45); }
+.act-wrap { margin-bottom: 8px; }
+.act-wrap .switch-row { margin-bottom: 0; }
+.why-est { margin: 4px 2px 0 48px; }
+.why-est summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: #c4b5fd; }
+.why-est p { font-size: 13px; line-height: 1.5; color: #c6d2e4; margin: 6px 0 2px; }
+
+/* reasoning trail */
+.trail { list-style: none; padding: 0; margin: 12px 0 4px; display: grid; gap: 6px; }
+.trail li { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.45; color: #c6d2e4; animation: fadeIn 0.35s ease both; }
+.trail-dot { flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900; margin-top: 1px; }
+.trail li.done .trail-dot { background: rgba(45, 212, 191, 0.2); color: #5eead4; }
+.trail li.doing .trail-dot { border: 2px solid #a78bfa; border-top-color: transparent; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* idea → estimate */
+.idea-chips { display: grid; gap: 6px; }
+.idea { text-align: left; border: 1px solid var(--line); background: rgba(148, 163, 184, 0.05); color: var(--text); padding: 9px 11px; border-radius: 10px; font-size: 13px; line-height: 1.35; cursor: pointer; }
+.idea:hover:not(:disabled) { border-color: var(--line-2); }
+.idea.on { border-color: rgba(167, 139, 250, 0.6); background: rgba(167, 139, 250, 0.1); }
+.idea:disabled { opacity: 0.6; cursor: default; }
+.design .ask-input { position: static; background: none; padding-top: 0; margin-top: 8px; }
+.design.compact .idea { font-size: 12.5px; padding: 7px 9px; }
+.design-result { margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px solid rgba(167, 139, 250, 0.4); background: linear-gradient(160deg, rgba(167, 139, 250, 0.1), rgba(45, 212, 191, 0.05)); }
+.design-title { font-size: 15px; }
+.effects { margin: 8px 0; padding-left: 18px; font-size: 13.5px; line-height: 1.5; }
+.design-why { font-size: 13px; line-height: 1.5; color: #c6d2e4; margin: 6px 0 10px; }
+.design-numbers { display: grid; gap: 6px; }
+.design-numbers > div { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; padding: 6px 10px; border-radius: 8px; background: rgba(5, 9, 18, 0.35); }
+.design-numbers span { color: var(--muted); }
+.design-numbers em { font-style: normal; font-weight: 600; color: var(--muted); }
+.design-src { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+
+/* entrance motion without opacity: a starved frame (heavy 3D intro) can never leave a card invisible */
+.tour-card.fade-in, .sim-panel.fade-in, .sim-result.fade-in, .welcome-card.fade-in { animation: slideIn 0.35s ease both; }
+@keyframes slideIn { from { transform: translateY(8px); } to { transform: none; } }

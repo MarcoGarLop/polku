@@ -4,6 +4,7 @@ import { openPlan } from '../state/plan';
 import { model, useSim } from '../state/sim';
 import { MATTI_A, MATTI_B, useStore } from '../state/store';
 import { d0, SHORT } from './ui';
+import { DesignBox } from './AiDesign';
 
 const regionsSorted = [...model.regions].sort((a, b) => a.nameEn.localeCompare(b.nameEn));
 const KEY_ACTIONS = ['public_fast_lane', 'navigator', 'fast_track', 'travel_cost_support', 'awareness'];
@@ -29,6 +30,7 @@ export function SimulatorPanel() {
   const set = useStore((s) => s.set);
   const active = useStore((s) => s.interventions);
   const toggle = useStore((s) => s.toggleIntervention);
+  const customActions = useStore((s) => s.customActions);
   const region = model.byId.get(patient.regionId)!;
   const plan = useMemo(() => bestPortfolio(model, patient.regionId, { priority: 'equity', budget: 'medium' }), [patient.regionId]);
 
@@ -102,14 +104,33 @@ export function SimulatorPanel() {
           </button>
         );
       })}
+      {customActions.map((id) => {
+        const iv = model.interventionsById.get(id);
+        if (!iv) return null;
+        const on = active.includes(id);
+        return (
+          <button key={id} className={`switch-row compact ${on ? 'on' : ''}`} role="switch" aria-checked={on} onClick={() => toggle(id)}>
+            <span className={`sw ${on ? 'on' : ''}`} aria-hidden />
+            <span className="switch-text">
+              <b>
+                {iv.label} <span className="ai-tag">Designed with AI</span>
+              </b>
+              <span className="switch-detail">{iv.roadmapActions[0] ? `Roadmap ${iv.roadmapActions[0].id} · p.${iv.roadmapActions[0].page}` : 'No matching roadmap action'}</span>
+            </span>
+          </button>
+        );
+      })}
       <div className="row" style={{ gap: 6, marginTop: 6 }}>
         <button className="btn small-btn" onClick={() => set({ interventions: plan.interventions })}>
-          Use recommended plan
+          Use the AI's recommended plan
         </button>
         <button className="btn small-btn" onClick={() => set({ interventions: [] })} disabled={!active.length}>
           Clear
         </button>
       </div>
+
+      <h3 className="sim-sub">3 · Design your own action with AI</h3>
+      <DesignBox regionId={patient.regionId} compact />
     </section>
   );
 }

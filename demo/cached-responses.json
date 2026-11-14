@@ -54,12 +54,11 @@
       "ms": 12813
     },
     "why does matti b wait so much longer than matti a|lappi": {
-      "text": "Matti B is projected to wait **131.4 days** longer than Matti A (225.5 days vs. 94.1 days), with 69.5% of that difference occurring before hospital referral.\n\nKey drivers from the exact decomposition:\n- **Entry route (72.5 days):** Relying on public primary care rather than occupational healthcare introduces significant wait times [ROADMAP p.11].\n- **Distance to hospital (43.6 days):** Living 180 km away creates travel friction and logistical delays [ROADMAP p.12–13].\n- **Education / health literacy (15.6 days):** Lower health literacy delays symptom recognition and timely presentation [ROADMAP p.10, p.34].\n- **Navigation barriers (13.2 days):** Living alone or lacking care coordination extends pre-referral steps [ROADMAP p.32].\n- **County capacity (-13.5 days):** Lapland's system capacity slightly offsets the gap.\n\n*(Estimates based on modeled synthetic profiles; entry-route impact assumes Finnish lymphoma findings [ROADMAP p.11]).*",
+      "text": "Matti B waits an estimated 225.5 days compared to 94.1 days for Matti A—a modelled gap of **131.4 days**, with 69.5% accumulating before hospital referral.\n\nKey drivers explaining why Matti B waits longer:\n- **Entry route**: 72.5 extra days from relying on public primary care instead of occupational health [ROADMAP p.11].\n- **Distance to hospital**: 43.6 extra days driven by living 180 km away [ROADMAP p.13].\n- **Health literacy & navigation**: 15.6 days from basic education and 13.2 days from navigating care alone [ROADMAP p.10, p.32].\n\nOnly 6.8% of patients matching Matti B start treatment within 42 days, compared to 54.9% for Matti A. These figures are model estimates, and the entry-route effect is an assumption adapted from Finnish lymphoma data [ROADMAP p.11].",
       "citations": [
         "ROADMAP p.11",
-        "ROADMAP p.12–13",
+        "ROADMAP p.13",
         "ROADMAP p.10",
-        "ROADMAP p.34",
         "ROADMAP p.32"
       ],
       "sourceIds": [],
@@ -68,18 +67,18 @@
           "name": "compare_patients",
           "args": {
             "a": {
-              "distanceKm": 8,
-              "navigationBarrier": false,
-              "regionId": "pohjois-pohjanmaa",
+              "education": "secondary",
               "route": "occupational_private",
-              "education": "secondary"
+              "distanceKm": 8,
+              "regionId": "pohjois-pohjanmaa",
+              "navigationBarrier": false
             },
             "b": {
               "navigationBarrier": true,
               "route": "public",
+              "distanceKm": 180,
               "education": "basic",
-              "regionId": "lappi",
-              "distanceKm": 180
+              "regionId": "lappi"
             }
           }
         },
@@ -104,12 +103,12 @@
         }
       ],
       "verification": {
-        "checked": 10,
+        "checked": 12,
         "unverified": []
       },
       "model": "gemini-3.8-flash",
       "mode": "full-context",
-      "ms": 15147
+      "ms": 18499
     },
     "which counties lose the most time and is it a capacity or an equity problem|lappi": {
       "text": "The slowest counties from symptom to treatment are **North Karelia** (**176.2 days**), North Ostrobothnia (174 days), and Central Finland (173.6 days).\n\nThis is primarily an **equity and access problem**, rather than specialized hospital capacity:\n- **Equity gap dominates:** Within counties, the gap between most- and least-delayed profiles reaches 139.8 days in North Karelia and 141.8 days in Lapland [ROADMAP p.9, 12].\n- **Entry route & geography:** The entry-route gap (public vs. occupational/private) accounts for 73.6 days in North Karelia and 70.4 days in Lapland [ROADMAP p.11]. In Lapland, distance adds 9.5 extra days for central hospital care and 7.7 days for radiotherapy, whereas specialist waiting times are actually -6.4 days below national averages [ROADMAP p.13].\n\n*(Modelled estimates; entry route assumes lymphoma parity.)*",
@@ -159,17 +158,20 @@
       "ms": 25669
     },
     "what does the national roadmap say about standardised referral criteria and how much would they help lapland|lappi": {
-      "text": "Roadmap Action 2.5.2 ([ROADMAP p.52]) calls for standardising referral criteria and symptom-based pathways modelled on Nordic systems (such as Denmark's *Kræftpakkeforløb* and Sweden's *SVF*), integrated directly into national cancer care pathways (Action 3.1.2 [ROADMAP p.56]).\n\nFor Lapland, our model estimates that a standardised fast track would:\n- Save an average of **14.7 days** per patient (evidence range: 8.2 to 21.3 days), reducing total time from 165.2 to 150.5 days.\n- Increase the share treated within the 42-day target from 21.5% to 43.5%.\n- Narrow Lapland's equity gap from 141.8 to 132.1 days.\n\n*Confidence note:* These pathway durations are modelled estimates with medium confidence; Finnish national pathway baselines remain preliminary.",
+      "text": "The national implementation roadmap commits to establishing standardised referral criteria and symptom-based pathways modeled on Nordic cancer patient pathways (such as Denmark’s Kræftpakkeforløb and Sweden’s SVF) [ROADMAP p.52, p.56]. These are scheduled for the five most common cancers in 2026–2028 and all major cancers by 2031, funded under action 3.1.1 [ROADMAP p.52–56].\n\nIn Lapland, implementing standardised fast-track pathways is estimated to:\n- Save an average of **16.4 days** per patient (evidence range: 6.8–31.1 days), cutting total time from 165.2 to 148.8 days.\n- Increase the share treated within 42 days from 21.5% to 38.6%.\n- Narrow Lapland’s equity gap from 141.8 to 131.2 days.\n\n*Note: Results are modelled estimates with medium confidence based on preliminary national pathway data.*",
       "citations": [
         "ROADMAP p.52",
-        "ROADMAP p.56"
+        "ROADMAP p.56",
+        "ROADMAP p.52–56"
       ],
       "sourceIds": [],
       "toolCalls": [
         {
-          "name": "get_region_profile",
+          "name": "get_evidence",
           "args": {
-            "regionId": "lappi"
+            "interventionIds": [
+              "fast_track"
+            ]
           }
         },
         {
@@ -182,11 +184,98 @@
           }
         },
         {
-          "name": "get_evidence",
+          "name": "get_region_profile",
           "args": {
-            "interventionIds": [
-              "fast_track"
-            ]
+            "regionId": "lappi"
+          }
+        },
+        {
+          "name": "ui_command",
+          "args": {
+            "regionId": "lappi",
+            "action": "flyTo"
+          }
+        }
+      ],
+      "mapCommands": [
+        {
+          "regionId": "lappi",
+          "action": "flyTo"
+        }
+      ],
+      "verification": {
+        "checked": 10,
+        "unverified": []
+      },
+      "model": "gemini-3.8-flash",
+      "mode": "full-context",
+      "ms": 12568
+    },
+    "who is being left behind in lapland and what should the region do first|lappi": {
+      "text": "The most delayed patients in Lapland are older or solitary residents with basic education living over 150 km from the central hospital who enter care via public health centres. They face **222.4 total days** from first symptom to treatment—141.8 extra days compared to the best-placed patient. The largest drivers of their delay are the public entry route (67.3 days) and distance to hospital (37.8 days).\n\n**What Lapland should do first:**\n- **Step zero:** Deploy a minimum cancer dataset to track symptom, referral, and treatment dates [ROADMAP p.58].\n- **Implement a standardised fast-track pathway** (Kræftpakkeforløb / SVF model), saving an estimated 16.4 days on average [ROADMAP p.52, p.56].\n- **Establish a public fast lane** to eliminate the primary care referral bottleneck [ROADMAP p.52].\n\n*Estimates based on synthetic profiles; Finnish pathway times are preliminary.*",
+      "citations": [
+        "ROADMAP p.58",
+        "ROADMAP p.52",
+        "ROADMAP p.56"
+      ],
+      "sourceIds": [],
+      "toolCalls": [
+        {
+          "name": "find_left_behind",
+          "args": {
+            "regionId": "lappi"
+          }
+        },
+        {
+          "name": "rank_interventions",
+          "args": {
+            "regionId": "lappi",
+            "priority": "balanced"
+          }
+        },
+        {
+          "name": "get_region_profile",
+          "args": {
+            "regionId": "lappi"
+          }
+        },
+        {
+          "name": "ui_command",
+          "args": {
+            "regionId": "lappi",
+            "action": "flyTo"
+          }
+        }
+      ],
+      "mapCommands": [
+        {
+          "regionId": "lappi",
+          "action": "flyTo"
+        }
+      ],
+      "verification": {
+        "checked": 6,
+        "unverified": []
+      },
+      "model": "gemini-3.8-flash",
+      "mode": "full-context",
+      "ms": 12539
+    },
+    "which regions lose the most time and is it a capacity or an equity problem|lappi": {
+      "text": "The slowest regions are North Karelia (176.2 days), North Ostrobothnia (174.0 days), and Central Finland (173.6 days), with Lapland at 165.2 days.\n\nThis is predominantly an **equity** issue rather than hospital capacity:\n\n* **69.5%** of the delay gap between public and private/occupational pathways occurs before hospital referral [ROADMAP p.11].\n* Entry route (public health center vs occupational/private) is the primary driver, adding 72.5 days, while travel distance adds 43.6 days.\n* Wellbeing county capacity actually offsets delays by -13.5 days; in Lapland, specialist waiting times are 6.4 days faster than the national average.\n\n*Confidence note:* Figures are model estimates based on public data; national pathway intervals are preliminary, and entry-route differences reflect Finnish lymphoma research applied as an assumption [ROADMAP p.11].",
+      "citations": [
+        "ROADMAP p.11"
+      ],
+      "sourceIds": [],
+      "toolCalls": [
+        {
+          "name": "list_regions",
+          "args": {}
+        },
+        {
+          "name": "get_region_profile",
+          "args": {
+            "regionId": "lappi"
           }
         },
         {
@@ -194,6 +283,25 @@
           "args": {
             "action": "flyTo",
             "regionId": "lappi"
+          }
+        },
+        {
+          "name": "compare_patients",
+          "args": {
+            "b": {
+              "navigationBarrier": true,
+              "distanceKm": 180,
+              "route": "public",
+              "education": "basic",
+              "regionId": "lappi"
+            },
+            "a": {
+              "distanceKm": 8,
+              "route": "occupational_private",
+              "education": "secondary",
+              "regionId": "pohjois-pohjanmaa",
+              "navigationBarrier": false
+            }
           }
         }
       ],
@@ -204,12 +312,12 @@
         }
       ],
       "verification": {
-        "checked": 10,
+        "checked": 9,
         "unverified": []
       },
       "model": "gemini-3.8-flash",
       "mode": "full-context",
-      "ms": 14313
+      "ms": 20158
     }
   }
 }

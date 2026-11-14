@@ -77,7 +77,7 @@ export function Welcome() {
           <br />
           One starts treatment after <span className="hl-a">{months(c.a.totalMeanDays)} months</span>. The other after <span className="hl-b">{months(c.b.totalMeanDays)}</span>.
         </h1>
-        <p className="welcome-sub">Polku shows why it happens, where in the care pathway, and what each of Finland's wellbeing services counties can do about it.</p>
+        <p className="welcome-sub">Polku is an AI analyst. It reads Finland's national cancer strategy and public health data, estimates what each action would change, simulates it for every region, and recommends what to do first.</p>
         <div className="welcome-btns">
           <button ref={startRef} className="btn primary big" onClick={() => goStep(0)}>
             ▶ Start the guided tour <span className="muted-on-primary">· 7 short steps</span>

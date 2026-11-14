@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { bestPortfolio, buildModel, compareProfiles, parseParams, parseRegions, profileTotal } from '@polku/sim';
-import { rawIndicators, rawParams, rawRegions } from '@polku/sim/data';
-import { askAgent, type AgentReply } from '../state/api';
+import { rawAiEffects, rawIndicators, rawParams, rawRegions } from '@polku/sim/data';
 import { openPlan } from '../state/plan';
 import { model, useSim } from '../state/sim';
 import { applyWhatIf, TOUR_STEPS, useStore, type WhatIf } from '../state/store';
 import { StepTimeline } from './StepTimeline';
-import { AnswerBody } from './AskPanel';
+import { AiTrail, DesignBox, plainText } from './AiDesign';
 import { d0, SHORT } from './ui';
 
 /* ---------------- shared bits ---------------- */
 
-function Card({ title, children, mapNote, foot }: { title: ReactNode; children?: ReactNode; mapNote?: ReactNode; foot?: ReactNode }) {
+function Card({ title, children, mapNote, howKnow }: { title: ReactNode; children?: ReactNode; mapNote?: ReactNode; howKnow?: ReactNode }) {
   const step = useStore((s) => s.step);
   const goStep = useStore((s) => s.goStep);
   const setMode = useStore((s) => s.setMode);
+  const [open, setOpen] = useState(false);
   const last = step === TOUR_STEPS.length - 1;
-  const headRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => headRef.current?.focus({ preventScroll: true }), [step]);
   return (
     <section className="tour-card glass fade-in" aria-live="polite" aria-labelledby="tour-title">
@@ -25,7 +25,7 @@ function Card({ title, children, mapNote, foot }: { title: ReactNode; children?:
           Step {step + 1} of {TOUR_STEPS.length}
         </span>
         <span className="tour-ask" title="What the AstraZeneca challenge asks for">
-          ✓ Challenge: {TOUR_STEPS[step].ask}
+          ✓ {TOUR_STEPS[step].ask}
         </span>
       </div>
       <h2 id="tour-title" className="tour-title" tabIndex={-1} ref={headRef}>
@@ -37,7 +37,14 @@ function Card({ title, children, mapNote, foot }: { title: ReactNode; children?:
           <span aria-hidden>🗺</span> <span>{mapNote}</span>
         </div>
       )}
-      {foot && <div className="tour-foot">{foot}</div>}
+      {howKnow && (
+        <div className="how">
+          <button className="how-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+            {open ? '▾' : '▸'} How do we know?
+          </button>
+          {open && <div className="how-body fade-in">{howKnow}</div>}
+        </div>
+      )}
       <div className="tour-nav">
         <button className="btn" onClick={() => goStep(step - 1)} disabled={step === 0}>
           ← Back
@@ -91,7 +98,13 @@ function StepGap() {
     <Card
       title="In Finland, lung cancer treatment starts about five months after the first symptom."
       mapNote="Each region is coloured by its average wait: green is faster, red is slower. Hover or click any region."
-      foot="Preliminary national averages from a Finnish study (Kuittinen, reported by Yle, 2025). Regional colours are estimates built from public THL waiting-time data."
+      howKnow={
+        <>
+          The national averages come from a Finnish study of four hospital districts (Kuittinen, reported by Yle in 2025). The results are preliminary. The colours for each
+          region are estimated from public data: waiting times in primary and specialist care (THL), education levels and distance to hospital for every municipality
+          (Statistics Finland).
+        </>
+      }
     >
       <NumberBar label="Finland" value={sim.national.base} max={170} color="#fb7185" strong />
       <NumberBar label="Sweden" value={107} max={170} color="#60a5fa" />
@@ -114,7 +127,13 @@ function StepPatients() {
         </>
       }
       mapNote="Now the map shows how long Matti B would wait in each municipality. Lapland, where he lives, is raised."
-      foot="Matti A and Matti B are fictional examples. AstraZeneca's question: “Do two patients with the same cancer have an equal chance, regardless of where they live, their income, education or ability to navigate the system?”"
+      howKnow={
+        <>
+          Matti A and Matti B are fictional. AstraZeneca asked: “Do two patients with the same cancer have an equal chance, regardless of where they live, their income,
+          education or ability to navigate the system?” Polku simulates 4,000 patients like each Matti, using public data for their region and published Finnish evidence
+          for the effect of their entry route.
+        </>
+      }
     >
       <div className="duo">
         <div className="duo-item">
@@ -123,7 +142,7 @@ function StepPatients() {
             {d0(c.a.totalMeanDays)}
             <span>days</span>
           </div>
-          <div className="duo-desc">Works, uses his work health care, lives 8 km from Oulu University Hospital.</div>
+          <div className="duo-desc">Works, uses his work health care, lives near Oulu University Hospital.</div>
         </div>
         <div className="duo-item">
           <div className="duo-name" style={{ color: 'var(--b)' }}>Matti B</div>
@@ -149,7 +168,7 @@ function StepWhere() {
         </>
       }
       mapNote="Matti B's Finland: almost every municipality is orange or red for him."
-      foot="The 8 steps are the patient pathway AstraZeneca shared with all teams (briefing, slide 10)."
+      howKnow={<>The 8 steps are the patient pathway AstraZeneca shared with all teams. Orange steps are delays on the patient's side, blue steps are delays in the health system.</>}
     >
       <p className="tour-text" style={{ marginTop: 0 }}>
         The delay is not inside the hospital. It is in <b>getting there</b>: noticing the symptoms, getting a doctor's appointment, getting referred.
@@ -165,6 +184,7 @@ const WHATIF_ROWS: { k: keyof WhatIf; label: string; detail: string }[] = [
   { k: 'help', label: 'Someone helps him through the system', detail: 'no longer alone with appointments and referrals' },
   { k: 'edu', label: 'Give him a university degree', detail: 'better at recognising symptoms early' },
 ];
+const NONE: WhatIf = { route: false, near: false, edu: false, help: false };
 
 function StepWhy() {
   const sim = useSim();
@@ -174,13 +194,17 @@ function StepWhy() {
   const now = useMemo(() => profileTotal(model, applyWhatIf(b, whatIf)), [b, whatIf]);
   const base = sim.comparisonBase.b.totalMeanDays;
   const aDays = sim.comparisonBase.a.totalMeanDays;
-  const none: WhatIf = { route: false, near: false, edu: false, help: false };
-  const alone = useMemo(() => Object.fromEntries(WHATIF_ROWS.map((r) => [r.k, base - profileTotal(model, applyWhatIf(b, { ...none, [r.k]: true }))])), [b, base]);
+  const alone = useMemo(() => Object.fromEntries(WHATIF_ROWS.map((r) => [r.k, base - profileTotal(model, applyWhatIf(b, { ...NONE, [r.k]: true }))])), [b, base]);
   return (
     <Card
       title="None of it is medical. Change one thing about Matti B and watch."
       mapNote="Every switch you flip recolours Matti B's Finland."
-      foot="The work-health-care effect comes from Finnish lymphoma data (Kuitunen 2026), applied to lung cancer as an assumption. Education and support effects are our stated assumptions."
+      howKnow={
+        <>
+          The effect of work health care comes from Finnish lymphoma patients (123 vs 207 days, Kuitunen 2026) and is applied to lung cancer as an assumption. The effects of
+          education and of living alone are assumptions based on Finnish and Nordic studies of social inequality in cancer care. All of them can be edited in the sources panel.
+        </>
+      }
     >
       {WHATIF_ROWS.map((r) => (
         <Switch key={r.k} on={whatIf[r.k]} onClick={() => toggle(r.k)} label={r.label} detail={r.detail} effect={<>−{d0(alone[r.k])} d</>} />
@@ -222,32 +246,57 @@ function StepAct() {
   const c0 = sim.comparisonBase;
   const c = useMemo(() => compareProfiles(model, a, b, active), [a, b, active]);
   const allOn = plan.interventions.every((id) => active.includes(id));
+  const aiModel = (rawAiEffects as any).model ?? 'Gemini';
   return (
     <Card
-      title={`Three actions from the national roadmap that close the gap in ${region.nameEn}.`}
+      title={`The AI recommends three actions from the national roadmap for ${region.nameEn}.`}
       mapNote={`Switch them on and watch ${region.nameEn} turn greener.`}
-      foot="Chosen by the simulator among 512 combinations to close the gap within a medium effort budget. Effects are estimates with evidence ranges."
+      howKnow={
+        <>
+          <AiTrail
+            running={false}
+            steps={[
+              'Read the national cancer strategy and its roadmap (Finnish, about 150,000 words)',
+              'Read the evidence: Nordic fast-track pathways, nurse navigators, e-consultation, distance studies',
+              'Estimated how much each of the 9 actions shortens each phase, with a range and a confidence level',
+              `Simulated 512 combinations for ${region.nameEn} and chose the one that closes the gap most within a medium effort`,
+            ]}
+          />
+          The effect sizes were estimated by {aiModel} from the evidence and are shown with their range. Open “Why?” under each action to read its reasoning.
+        </>
+      }
     >
       <div className="act-zero">
         <span className="act-num">0</span>
         <div>
-          <b>Start measuring.</b> <span className="muted">Finland does not record these waiting times today. Record three dates, the entry route and education for every patient.</span>
+          <b>Start measuring.</b> <span className="muted">Finland does not record these waiting times today.</span>
         </div>
       </div>
       {plan.interventions.map((id) => {
         const iv = model.interventionsById.get(id)!;
         return (
-          <Switch
-            key={id}
-            on={active.includes(id)}
-            onClick={() => toggle(id)}
-            label={SHORT[id]}
-            detail={
-              <>
-                {WHY_ACTION[id]} <span className="tag roadmap">Roadmap {iv.roadmapActions[0]?.id} · p.{iv.roadmapActions[0]?.page}</span>
-              </>
-            }
-          />
+          <div key={id} className="act-wrap">
+            <Switch
+              on={active.includes(id)}
+              onClick={() => toggle(id)}
+              label={
+                <>
+                  {SHORT[id] ?? iv.label} {iv.estimatedBy === 'ai' && <span className="ai-tag">AI estimate</span>}
+                </>
+              }
+              detail={
+                <>
+                  {WHY_ACTION[id]} <span className="tag roadmap">Roadmap {iv.roadmapActions[0]?.id} · p.{iv.roadmapActions[0]?.page}</span>
+                </>
+              }
+            />
+            {iv.rationale && (
+              <details className="why-est">
+                <summary>Why this estimate?</summary>
+                <p>{plainText(iv.rationale)}</p>
+              </details>
+            )}
+          </div>
         );
       })}
       <div className="impact">
@@ -288,48 +337,21 @@ function StepAct() {
   );
 }
 
-const AI_QUESTION = 'Who is being left behind in Lapland, and what should the county do first?';
-
 function StepAI() {
-  const a = useStore((s) => s.profileA);
   const b = useStore((s) => s.profileB);
-  const set = useStore((s) => s.set);
-  const [reply, setReply] = useState<AgentReply | null>(null);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    askAgent([{ role: 'user', text: AI_QUESTION }], { regionId: b.regionId, interventions: [], profileA: a, profileB: b })
-      .then((r) => alive && setReply(r))
-      .catch(() => alive && setFailed(true));
-    return () => {
-      alive = false;
-    };
-  }, [a, b]);
   return (
     <Card
-      title="An AI analyst that reads the whole national cancer strategy, and never invents a number."
-      foot="Gemini reads the full strategy and roadmap (about 150,000 words of Finnish), runs Polku's simulator as tools, cites the page, and Polku checks every number in the answer."
+      title="Have your own idea? The AI estimates it from the evidence and simulates it."
+      mapNote="Add the action to the plan and the map updates."
+      howKnow={
+        <>
+          Gemini reads the national strategy, the roadmap and our evidence notes, decides which part of the pathway the idea would change and by how much, and gives a
+          range and a confidence level. The days are then calculated by Polku's simulator, never by the language model, so every number can be traced. The AI also says
+          when an idea is unlikely to help.
+        </>
+      }
     >
-      <div className="bubble-user">{AI_QUESTION}</div>
-      <div className="answer card compact">
-        {reply ? (
-          <AnswerBody reply={reply} />
-        ) : failed ? (
-          <p className="muted">The AI server is offline right now. Open the simulator to see the same analysis computed locally.</p>
-        ) : (
-          <div className="thinking">
-            <span className="dots">
-              <i />
-              <i />
-              <i />
-            </span>
-            Reading the roadmap and running simulations…
-          </div>
-        )}
-      </div>
-      <button className="btn wide" onClick={() => set({ askOpen: true })}>
-        Ask your own question
-      </button>
+      <DesignBox regionId={b.regionId} autoRun />
     </Card>
   );
 }
@@ -345,26 +367,24 @@ function StepTrust() {
     for (const k in occ) occ[k] = 1 - (1 - occ[k]) / 2; // entry-route effect halved
     for (const l of p.patient_factors.education.levels) l.multipliers = {}; // no education effect
     p.patient_factors.navigation_barrier.multipliers = {}; // no navigation effect
-    const m = buildModel(parseParams(p), parseRegions(rawRegions, rawIndicators));
+    const m = buildModel(parseParams(p, rawAiEffects as any), parseRegions(rawRegions, rawIndicators));
     return compareProfiles(m, a, b).gapDays;
   }, [a, b]);
   return (
-    <Card
-      title="Can you trust these numbers? Here is exactly how far."
-      foot="Decision support for planners. Public aggregated data only, no patient records. Not a medical device."
-    >
+    <Card title="Can you trust it? Here is exactly how far.">
       <ul className="trust">
         <li>
-          <b>Real public data</b> for all 22 wellbeing counties and 292 municipalities: THL waiting times, education and Statistics Finland population and distances.
+          <b>Real public data</b> for all 22 wellbeing counties and 292 municipalities.
         </li>
         <li>
-          <b>Every number has a source</b> and a confidence level. Anything modelled is labelled “Estimate”.
+          <b>The AI never invents a number.</b> It estimates effects from cited evidence; the simulator calculates the days; Polku checks every figure.
         </li>
         <li>
-          <b>Honest about uncertainty:</b> Matti B's gap is <b>{d0(sim.comparisonBase.gapDays)} days</b> with our assumptions, and still <b>{d0(cautiousGap)} days</b> with very cautious ones.
+          <b>Honest about uncertainty:</b> Matti B's gap is <b>{d0(sim.comparisonBase.gapDays)} days</b>, and still <b>{d0(cautiousGap)} days</b> with very cautious
+          assumptions.
         </li>
         <li>
-          <b>The first recommendation is to measure.</b> Finland does not record these times yet, so a pilot with one wellbeing county (for example North Ostrobothnia) would calibrate Polku with real data through Findata.
+          <b>Next step:</b> a pilot with one wellbeing county, starting to measure these times and calibrating Polku with real data through Findata.
         </li>
       </ul>
       <div className="plan-btns">

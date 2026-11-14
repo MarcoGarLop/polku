@@ -243,3 +243,11 @@ export function phaseMeans(
 }
 
 export const sumPhases = (v: PhaseVec) => PHASES.reduce((s, p) => s + v[p], 0);
+
+/** Add (or replace) an intervention at runtime, e.g. one designed live with the AI. */
+export function registerIntervention(model: Model, iv: Intervention): void {
+  const i = model.params.interventions.findIndex((x) => x.id === iv.id);
+  if (i >= 0) model.params.interventions[i] = iv;
+  else model.params.interventions.push(iv);
+  model.interventionsById.set(iv.id, iv);
+}

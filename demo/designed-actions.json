@@ -1,0 +1,207 @@
+{
+  "_readme": "Actions designed with Gemini, recorded for the offline demo.",
+  "entries": {
+    "a mobile ct unit that visits northern lapland every month|lappi": {
+      "idea": "A mobile CT unit that visits northern Lapland every month",
+      "regionId": "lappi",
+      "estimate": {
+        "id": "ai_a_mobile_ct_unit_that_visits_northern_la",
+        "effects": [
+          {
+            "phase": "P2",
+            "kind": "share_of_phase_days",
+            "appliesTo": "all",
+            "low": 0,
+            "mid": 0.03,
+            "high": 0.08
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_distance_days",
+            "appliesTo": "all",
+            "low": 0.02,
+            "mid": 0.1,
+            "high": 0.25
+          }
+        ],
+        "confidence": "low",
+        "rationale": "Finland has low primary care CT access (S02) and >400 km travel distances (S03). However, a Danish RCT found direct GP CT access did not significantly reduce diagnostic time (S17), and a monthly schedule introduces up to a 30-day wait. Thus, P2 reduction is near zero, with a modest reduction in P4 travel-attributable days.",
+        "evidence": [
+          "S02",
+          "S03",
+          "S17",
+          "ROADMAP p.13",
+          "ROADMAP p.46"
+        ],
+        "roadmapAction": "2.3.4",
+        "roadmapPage": 46,
+        "label": "Monthly mobile CT unit"
+      },
+      "trail": [
+        "Read the national cancer strategy, the roadmap and the evidence notes",
+        "Matched the idea to roadmap action 2.3.4 (p.46)",
+        "Estimated the effect on primary care, diagnosis (low confidence)",
+        "Ran the pathway simulation for Lapland, for Matti B and for all 22 regions"
+      ],
+      "results": {
+        "regionDaysSaved": {
+          "low": 0.1,
+          "mid": 1.5,
+          "high": 3.8
+        },
+        "equityGapClosed": 1.4,
+        "mattiB": {
+          "before": 225.5,
+          "after": 223.4
+        },
+        "gapAB": {
+          "before": 131.4,
+          "after": 130.1
+        },
+        "nationalDaysSavedIfEverywhere": 1.3
+      },
+      "model": "gemini-4-argon",
+      "ms": 14694
+    },
+    "a sameday phone line where public health centre doctors can book a lung specialist assessment for suspected cancer|lappi": {
+      "idea": "A same-day phone line where public health centre doctors can book a lung specialist assessment for suspected cancer",
+      "regionId": "lappi",
+      "estimate": {
+        "id": "ai_a_same_day_phone_line_where_public_healt",
+        "effects": [
+          {
+            "phase": "P2",
+            "kind": "share_of_phase_days",
+            "appliesTo": "public_route",
+            "low": 0.05,
+            "mid": 0.15,
+            "high": 0.25
+          },
+          {
+            "phase": "P3",
+            "kind": "share_of_phase_days",
+            "appliesTo": "public_route",
+            "low": 0.1,
+            "mid": 0.2,
+            "high": 0.35
+          }
+        ],
+        "confidence": "low",
+        "rationale": "Targets public health centre referrals (public_route). eConsult studies (S15) show rapid specialist responses (hours to 4 days) and 11-19 day wait reductions, but are non-cancer specific. Fast-track pathways (S14, S24) cut diagnostic waits ~29%, though Sweden's 36% compliance (S07) shows implementation limits. Conservatively, we estimate a 15% reduction in P2 (6/41d) and 20% in P3 (2.4/12d).",
+        "evidence": [
+          "S15",
+          "S07",
+          "S14",
+          "S24",
+          "ROADMAP p.52"
+        ],
+        "roadmapAction": "2.5.2",
+        "roadmapPage": 52,
+        "label": "GP-to-specialist same-day booking line"
+      },
+      "trail": [
+        "Read the national cancer strategy, the roadmap and the evidence notes",
+        "Matched the idea to roadmap action 2.5.2 (p.52)",
+        "Estimated the effect on primary care, getting to a specialist (low confidence)",
+        "Ran the pathway simulation for Lapland, for Matti B and for all 22 regions"
+      ],
+      "results": {
+        "regionDaysSaved": {
+          "low": 2.3,
+          "mid": 6.3,
+          "high": 10.6
+        },
+        "equityGapClosed": 8.9,
+        "mattiB": {
+          "before": 225.5,
+          "after": 216.6
+        },
+        "gapAB": {
+          "before": 131.4,
+          "after": 122.5
+        },
+        "nationalDaysSavedIfEverywhere": 7.2
+      },
+      "model": "gemini-4-argon",
+      "ms": 89605
+    },
+    "volunteer drivers and a named contact person for lung cancer patients who live alone|lappi": {
+      "idea": "Volunteer drivers and a named contact person for lung cancer patients who live alone",
+      "regionId": "lappi",
+      "estimate": {
+        "id": "ai_volunteer_drivers_and_a_named_contact_pe",
+        "effects": [
+          {
+            "phase": "P4",
+            "kind": "share_of_phase_days",
+            "appliesTo": "navigation_barrier",
+            "low": 0.05,
+            "mid": 0.14,
+            "high": 0.25
+          },
+          {
+            "phase": "P5",
+            "kind": "share_of_phase_days",
+            "appliesTo": "navigation_barrier",
+            "low": 0.05,
+            "mid": 0.14,
+            "high": 0.25
+          },
+          {
+            "phase": "P4",
+            "kind": "share_of_distance_days",
+            "appliesTo": "navigation_barrier",
+            "low": 0.05,
+            "mid": 0.15,
+            "high": 0.3
+          },
+          {
+            "phase": "P5",
+            "kind": "share_of_distance_days",
+            "appliesTo": "navigation_barrier",
+            "low": 0.05,
+            "mid": 0.15,
+            "high": 0.3
+          }
+        ],
+        "confidence": "low",
+        "rationale": "Observational studies of nurse navigators (S16) show a ~21% reduction (48 to 38 days) from referral to treatment; we conservatively estimate a 14% reduction in P4 and P5 for patients living alone (navigation_barrier), aligned with Roadmap 1.2.3. Volunteer drivers mitigate travel barriers (S18, S27, ROADMAP p.13), conservatively cutting distance-attributable delays in P4 and P5 by 15%.",
+        "evidence": [
+          "S16",
+          "S18",
+          "S27",
+          "ROADMAP p.13",
+          "ROADMAP p.32"
+        ],
+        "roadmapAction": "1.2.3",
+        "roadmapPage": 32,
+        "label": "Drivers and named coordinator"
+      },
+      "trail": [
+        "Read the national cancer strategy, the roadmap and the evidence notes",
+        "Matched the idea to roadmap action 1.2.3 (p.32)",
+        "Estimated the effect on diagnosis, starting treatment (low confidence)",
+        "Ran the pathway simulation for Lapland, for Matti B and for all 22 regions"
+      ],
+      "results": {
+        "regionDaysSaved": {
+          "low": 1.2,
+          "mid": 3.3,
+          "high": 5.9
+        },
+        "equityGapClosed": 12.7,
+        "mattiB": {
+          "before": 225.5,
+          "after": 212.3
+        },
+        "gapAB": {
+          "before": 131.4,
+          "after": 118.2
+        },
+        "nationalDaysSavedIfEverywhere": 2.4
+      },
+      "model": "gemini-4-argon",
+      "ms": 15373
+    }
+  }
+}
