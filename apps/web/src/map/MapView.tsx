@@ -68,7 +68,7 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
   const profileA = useStore((s) => s.profileA);
   const profileB = useStore((s) => s.profileB);
   const lensProfile = useLensProfile();
-  const lensName = mode === 'sim' ? 'your patient' : 'Matti B';
+  const lensName = mode === 'sim' ? 'your patient' : 'Patient B';
   const reduceMotion = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, []);
   const showFlows = !reduceMotion;
   const dur = (ms: number) => (reduceMotion ? 0 : ms);
@@ -140,7 +140,7 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo, lensProfile, interventions, phase]);
-  /** Fixed colour scale from the best-placed (Matti A) to the worst-placed (Matti B) patient, so improvements visibly turn green. */
+  /** Fixed colour scale from the best-placed (Patient A) to the worst-placed (Patient B) patient, so improvements visibly turn green. */
   const muniDomain = useMemo(() => {
     if (!geo) return [0, 1] as [number, number];
     const val = (p: typeof profileA) => (m: (typeof geo.municipalities)[number]) => {

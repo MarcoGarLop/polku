@@ -10,7 +10,7 @@ export interface SimState {
   byId: Map<string, RegionResult>;
   baseById: Map<string, RegionResult>;
   national: { base: number; current: number };
-  /** Matti A vs Matti B with no actions (the story baseline). */
+  /** Patient A vs Patient B with no actions (the story baseline). */
   comparisonBase: ProfileComparison;
 }
 

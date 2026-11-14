@@ -64,7 +64,7 @@ export function verifyNumbers(text: string, toolResults: unknown[]): { checked: 
 }
 
 function uiContextText(ui: UiContext): string {
-  return `[UI context — selected county: ${ui.regionId ?? 'none (whole Finland)'}; active interventions: ${(ui.interventions ?? []).join(', ') || 'none'}; Matti A: ${JSON.stringify(ui.profileA ?? {})}; Matti B: ${JSON.stringify(ui.profileB ?? {})}]`;
+  return `[UI context — selected county: ${ui.regionId ?? 'none (whole Finland)'}; active interventions: ${(ui.interventions ?? []).join(', ') || 'none'}; Patient A: ${JSON.stringify(ui.profileA ?? {})}; Patient B: ${JSON.stringify(ui.profileB ?? {})}]`;
 }
 
 export async function runAgent(messages: ChatMessage[], ui: UiContext, opts: { useFallback?: boolean } = {}): Promise<AgentResponse> {
@@ -75,7 +75,7 @@ export async function runAgent(messages: ChatMessage[], ui: UiContext, opts: { u
   }));
   const ctx: ToolContext = { mapCommands: [] };
   const toolCalls: AgentResponse['toolCalls'] = [];
-  // numbers the user/UI supplied (e.g. Matti B's 180 km) are legitimate too
+  // numbers the user/UI supplied (e.g. Patient B's 180 km) are legitimate too
   const toolResults: unknown[] = [ui];
   let modelUsed = '';
   let mode: AgentResponse['mode'] = 'full-context';

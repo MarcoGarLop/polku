@@ -3,7 +3,7 @@ import { bestPortfolio, simulateProfile, type EducationId, type RouteId } from '
 import { openPlan } from '../state/plan';
 import { model, useSim } from '../state/sim';
 import { MATTI_A, MATTI_B, useStore } from '../state/store';
-import { d0, SHORT } from './ui';
+import { ACTION_DESC, d0, SHORT } from './ui';
 import { DesignBox } from './AiDesign';
 
 const regionsSorted = [...model.regions].sort((a, b) => a.nameEn.localeCompare(b.nameEn));
@@ -44,10 +44,10 @@ export function SimulatorPanel() {
       <h3 className="sim-sub">1 · The patient</h3>
       <div className="row" style={{ gap: 6 }}>
         <button className="btn small-btn" onClick={() => set({ patient: MATTI_A, selectedRegion: MATTI_A.regionId })}>
-          Load Matti A
+          Load Patient A
         </button>
         <button className="btn small-btn" onClick={() => set({ patient: MATTI_B, selectedRegion: MATTI_B.regionId })}>
-          Load Matti B
+          Load Patient B
         </button>
       </div>
       <div className="field">
@@ -99,7 +99,7 @@ export function SimulatorPanel() {
             <span className={`sw ${on ? 'on' : ''}`} aria-hidden />
             <span className="switch-text">
               <b>{SHORT[id]}</b>
-              <span className="switch-detail">Roadmap {iv.roadmapActions[0]?.id} · p.{iv.roadmapActions[0]?.page}</span>
+              <span className="switch-detail">{ACTION_DESC[id]}</span>
             </span>
           </button>
         );
@@ -112,10 +112,8 @@ export function SimulatorPanel() {
           <button key={id} className={`switch-row compact ${on ? 'on' : ''}`} role="switch" aria-checked={on} onClick={() => toggle(id)}>
             <span className={`sw ${on ? 'on' : ''}`} aria-hidden />
             <span className="switch-text">
-              <b>
-                {iv.label} <span className="ai-tag">Designed with AI</span>
-              </b>
-              <span className="switch-detail">{iv.roadmapActions[0] ? `Roadmap ${iv.roadmapActions[0].id} · p.${iv.roadmapActions[0].page}` : 'No matching roadmap action'}</span>
+              <b>{iv.label}</b>
+              <span className="switch-detail">Your idea, estimated by the AI</span>
             </span>
           </button>
         );
@@ -156,9 +154,8 @@ export function SimulatorResult() {
       <div className="eyebrow">This patient waits</div>
       <div className="big-num">
         {d0(r.totalMeanDays)} <span>days</span>
-        <span className="badge est">Estimate</span>
       </div>
-      <div className={`impact-d ${saved > 0.5 ? '' : 'idle'}`}>{saved > 0.5 ? `−${d0(saved)} days thanks to the actions` : 'from first symptom to first treatment'}</div>
+      <div className={`impact-d ${saved > 0.5 ? '' : 'idle'}`}>{saved > 0.5 ? `−${d0(saved)} days thanks to the actions` : 'from first symptom to first treatment (estimate)'}</div>
       <div style={{ marginTop: 10 }}>
         {rows.map((x) => (
           <div key={x.label} className="nbar small-nbar" role="img" aria-label={`${x.label}: ${d0(x.v)} days`}>

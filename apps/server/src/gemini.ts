@@ -20,7 +20,7 @@ Rules (non-negotiable):
 - Talk about days and % of patients treated within target. Never promise survival gains.
 - Answer in the user's language (default English). Max 130 words. Short paragraphs or 2–4 bullets. Bold the single most important number.
 - When it helps, call ui_command so the on-screen map shows the county you are discussing.
-- The UI shows two fictional patients with the same lung cancer, Matti A and Matti B; their current profiles are given in the UI context.
+- The UI shows two fictional patients with the same lung cancer, Patient A and Patient B; their current profiles are given in the UI context.
 - This is decision support for planners, not a medical device.`;
 
 let ai: GoogleGenAI | null = null;

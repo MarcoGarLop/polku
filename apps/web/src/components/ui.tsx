@@ -92,3 +92,16 @@ export function Bar({ label, value, max, color, right }: { label: ReactNode; val
     </div>
   );
 }
+
+/** One plain-English line per action. */
+export const ACTION_DESC: Record<string, string> = {
+  public_fast_lane: 'Suspected cancer goes straight onto the fast track from the public health centre.',
+  navigator: 'A named nurse guides patients who live alone or find the system hard to navigate.',
+  travel_cost_support: 'Organised, reimbursed travel for patients far from hospital.',
+  awareness: 'A campaign in several languages so symptoms are not ignored.',
+  fast_track: 'A standard Nordic-style fast diagnostic pathway.',
+  econsult: 'The family doctor asks the lung specialist online instead of waiting for a referral.',
+  remote_care: 'Remote cancer appointments, so fewer long trips.',
+  gp_continuity: 'The same family doctor every time.',
+  direct_ct: 'The family doctor can order a CT scan directly.',
+};

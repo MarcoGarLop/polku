@@ -41,7 +41,7 @@
         "Read the national cancer strategy, the roadmap and the evidence notes",
         "Matched the idea to roadmap action 2.3.4 (p.46)",
         "Estimated the effect on primary care, diagnosis (low confidence)",
-        "Ran the pathway simulation for Lapland, for Matti B and for all 22 regions"
+        "Ran the pathway simulation for Lapland, for Patient B and for all 22 regions"
       ],
       "results": {
         "regionDaysSaved": {
@@ -103,7 +103,7 @@
         "Read the national cancer strategy, the roadmap and the evidence notes",
         "Matched the idea to roadmap action 2.5.2 (p.52)",
         "Estimated the effect on primary care, getting to a specialist (low confidence)",
-        "Ran the pathway simulation for Lapland, for Matti B and for all 22 regions"
+        "Ran the pathway simulation for Lapland, for Patient B and for all 22 regions"
       ],
       "results": {
         "regionDaysSaved": {
@@ -181,7 +181,7 @@
         "Read the national cancer strategy, the roadmap and the evidence notes",
         "Matched the idea to roadmap action 1.2.3 (p.32)",
         "Estimated the effect on diagnosis, starting treatment (low confidence)",
-        "Ran the pathway simulation for Lapland, for Matti B and for all 22 regions"
+        "Ran the pathway simulation for Lapland, for Patient B and for all 22 regions"
       ],
       "results": {
         "regionDaysSaved": {

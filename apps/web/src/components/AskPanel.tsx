@@ -19,11 +19,15 @@ const TOOL_LABEL: Record<string, string> = {
   ui_command: 'moved the map',
 };
 
+/** "ROADMAP p.52, STRATEGY p.30" → "national roadmap, page 52; national strategy, page 30" */
+const citeWords = (c: string) =>
+  c.replace(/ROADMAP/gi, 'national roadmap').replace(/STRATEGY/gi, 'national strategy').replace(/\bp\.\s?(\d+)/g, 'page $1');
+
 /** Minimal markdown: paragraphs, bullets, **bold**, and [ROADMAP p.N] citations as chips. */
 function inline(text: string): ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*|\[[^\]]*(?:ROADMAP|STRATEGY)[^\]]*\])/gi).map((part, i) => {
     if (/^\*\*.*\*\*$/.test(part)) return <b key={i}>{part.slice(2, -2)}</b>;
-    if (/^\[.*(ROADMAP|STRATEGY).*\]$/i.test(part)) return <span key={i} className="cite">{part.slice(1, -1)}</span>;
+    if (/^\[.*(ROADMAP|STRATEGY).*\]$/i.test(part)) return <span key={i} className="cite-plain">({citeWords(part.slice(1, -1))})</span>;
     return <Fragment key={i}>{part.replace(/(^|\s)\*(\S[^*]*)\*(?=\s|$|[.,])/g, '$1$2')}</Fragment>;
   });
 }
@@ -154,7 +158,7 @@ export function AskDrawer() {
 
   const suggestions = [
     `Who is being left behind in ${region.nameEn}, and what should the region do first?`,
-    'Why does Matti B wait so much longer than Matti A?',
+    'Why does Patient B wait so much longer than Patient A?',
     `What does the national roadmap say about standardised referral criteria, and how much would they help ${region.nameEn}?`,
     'Which regions lose the most time, and is it a capacity or an equity problem?',
   ];

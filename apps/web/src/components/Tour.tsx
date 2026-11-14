@@ -4,9 +4,9 @@ import { rawAiEffects, rawIndicators, rawParams, rawRegions } from '@polku/sim/d
 import { openPlan } from '../state/plan';
 import { model, useSim } from '../state/sim';
 import { applyWhatIf, TOUR_STEPS, useStore, type WhatIf } from '../state/store';
-import { StepTimeline } from './StepTimeline';
+import { JourneyBars } from './JourneyBars';
 import { AiTrail, DesignBox, plainText } from './AiDesign';
-import { d0, SHORT } from './ui';
+import { ACTION_DESC, d0, SHORT } from './ui';
 
 /* ---------------- shared bits ---------------- */
 
@@ -123,29 +123,29 @@ function StepPatients() {
     <Card
       title={
         <>
-          Two men, same lung cancer. One waits <span className="hl-b">{d0(c.gapDays)} days longer</span>.
+          Two people, same lung cancer. One waits <span className="hl-b">{d0(c.gapDays)} days longer</span>.
         </>
       }
-      mapNote="Now the map shows how long Matti B would wait in each municipality. Lapland, where he lives, is raised."
+      mapNote="Now the map shows how long Patient B would wait in each municipality. Lapland, where Patient B lives, is raised."
       howKnow={
         <>
-          Matti A and Matti B are fictional. AstraZeneca asked: “Do two patients with the same cancer have an equal chance, regardless of where they live, their income,
-          education or ability to navigate the system?” Polku simulates 4,000 patients like each Matti, using public data for their region and published Finnish evidence
+          Patient A and Patient B are fictional. AstraZeneca asked: “Do two patients with the same cancer have an equal chance, regardless of where they live, their income,
+          education or ability to navigate the system?” Polku simulates 4,000 patients like each of them, using public data for their region and published Finnish evidence
           for the effect of their entry route.
         </>
       }
     >
       <div className="duo">
         <div className="duo-item">
-          <div className="duo-name" style={{ color: 'var(--a)' }}>Matti A</div>
+          <div className="duo-name" style={{ color: 'var(--a)' }}>Patient A</div>
           <div className="duo-num" style={{ color: 'var(--a)' }}>
             {d0(c.a.totalMeanDays)}
             <span>days</span>
           </div>
-          <div className="duo-desc">Works, uses his work health care, lives near Oulu University Hospital.</div>
+          <div className="duo-desc">Works, uses work health care, lives near Oulu University Hospital.</div>
         </div>
         <div className="duo-item">
-          <div className="duo-name" style={{ color: 'var(--b)' }}>Matti B</div>
+          <div className="duo-name" style={{ color: 'var(--b)' }}>Patient B</div>
           <div className="duo-num" style={{ color: 'var(--b)' }}>
             {d0(c.b.totalMeanDays)}
             <span>days</span>
@@ -164,25 +164,25 @@ function StepWhere() {
     <Card
       title={
         <>
-          <span className="hl-b">{Math.round(c.shareBeforeReferral * 100)}%</span> of the difference happens before a specialist ever sees him.
+          <span className="hl-b">{Math.round(c.shareBeforeReferral * 100)}%</span> of the difference happens before a specialist ever sees them.
         </>
       }
-      mapNote="Matti B's Finland: almost every municipality is orange or red for him."
-      howKnow={<>The 8 steps are the patient pathway AstraZeneca shared with all teams. Orange steps are delays on the patient's side, blue steps are delays in the health system.</>}
+      mapNote="Patient B's Finland: almost every municipality is orange or red."
+      howKnow={<>The three stretches group the 8-step patient pathway AstraZeneca shared with all teams: from the first symptom to the first doctor, the time in primary care until the referral is sent, and the time in hospital from the referral to the first treatment.</>}
     >
       <p className="tour-text" style={{ marginTop: 0 }}>
         The delay is not inside the hospital. It is in <b>getting there</b>: noticing the symptoms, getting a doctor's appointment, getting referred.
       </p>
-      <StepTimeline a={c.a} b={c.b} compact />
+      <JourneyBars a={c.a} b={c.b} />
     </Card>
   );
 }
 
 const WHATIF_ROWS: { k: keyof WhatIf; label: string; detail: string }[] = [
-  { k: 'route', label: 'Give him work health care', detail: 'instead of the public health centre' },
-  { k: 'near', label: 'Move him near the hospital', detail: '10 km instead of 180 km' },
-  { k: 'help', label: 'Someone helps him through the system', detail: 'no longer alone with appointments and referrals' },
-  { k: 'edu', label: 'Give him a university degree', detail: 'better at recognising symptoms early' },
+  { k: 'route', label: 'Give them work health care', detail: 'instead of the public health centre' },
+  { k: 'near', label: 'Move them near the hospital', detail: '10 km instead of 180 km' },
+  { k: 'help', label: 'Someone helps them through the system', detail: 'no longer alone with appointments and referrals' },
+  { k: 'edu', label: 'Give them a university degree', detail: 'better at recognising symptoms early' },
 ];
 const NONE: WhatIf = { route: false, near: false, edu: false, help: false };
 
@@ -197,8 +197,8 @@ function StepWhy() {
   const alone = useMemo(() => Object.fromEntries(WHATIF_ROWS.map((r) => [r.k, base - profileTotal(model, applyWhatIf(b, { ...NONE, [r.k]: true }))])), [b, base]);
   return (
     <Card
-      title="None of it is medical. Change one thing about Matti B and watch."
-      mapNote="Every switch you flip recolours Matti B's Finland."
+      title="None of it is medical. Change one thing about Patient B and watch."
+      mapNote="Every switch you flip recolours Patient B's Finland."
       howKnow={
         <>
           The effect of work health care comes from Finnish lymphoma patients (123 vs 207 days, Kuitunen 2026) and is applied to lung cancer as an assumption. The effects of
@@ -210,11 +210,11 @@ function StepWhy() {
         <Switch key={r.k} on={whatIf[r.k]} onClick={() => toggle(r.k)} label={r.label} detail={r.detail} effect={<>−{d0(alone[r.k])} d</>} />
       ))}
       <div className="live-compare" aria-live="polite">
-        <NumberBar label="Matti B" value={now} max={240} color="#fb7185" strong />
-        <NumberBar label="Matti A" value={aDays} max={240} color="#22d3ee" />
+        <NumberBar label="Patient B" value={now} max={240} color="#fb7185" strong />
+        <NumberBar label="Patient A" value={aDays} max={240} color="#22d3ee" />
         {now < base - 0.5 && (
           <div className="live-delta">
-            Matti B now waits <b>{d0(base - now)} days less</b>.
+            Patient B now waits <b>{d0(base - now)} days less</b>.
           </div>
         )}
       </div>
@@ -222,17 +222,7 @@ function StepWhy() {
   );
 }
 
-const WHY_ACTION: Record<string, string> = {
-  public_fast_lane: 'Suspected cancer goes straight onto the fast track from the public health centre.',
-  navigator: 'A named nurse guides patients who live alone or find the system hard to navigate.',
-  travel_cost_support: 'Organised, reimbursed travel for patients far from hospital.',
-  awareness: 'A campaign in several languages so symptoms are not ignored.',
-  fast_track: 'A standard Nordic-style fast diagnostic pathway.',
-  econsult: 'The family doctor asks the lung specialist online instead of waiting for a referral.',
-  remote_care: 'Remote cancer appointments, so fewer long trips.',
-  gp_continuity: 'The same family doctor every time.',
-  direct_ct: 'The family doctor can order a CT scan directly.',
-};
+
 
 function StepAct() {
   const sim = useSim();
@@ -279,21 +269,18 @@ function StepAct() {
             <Switch
               on={active.includes(id)}
               onClick={() => toggle(id)}
-              label={
-                <>
-                  {SHORT[id] ?? iv.label} {iv.estimatedBy === 'ai' && <span className="ai-tag">AI estimate</span>}
-                </>
-              }
-              detail={
-                <>
-                  {WHY_ACTION[id]} <span className="tag roadmap">Roadmap {iv.roadmapActions[0]?.id} · p.{iv.roadmapActions[0]?.page}</span>
-                </>
-              }
+              label={SHORT[id] ?? iv.label}
+              detail={ACTION_DESC[id]}
             />
             {iv.rationale && (
               <details className="why-est">
-                <summary>Why this estimate?</summary>
+                <summary>Why the AI expects this effect</summary>
                 <p>{plainText(iv.rationale)}</p>
+                {iv.roadmapActions[0] && (
+                  <p>
+                    Part of national roadmap action {iv.roadmapActions[0].id} (page {iv.roadmapActions[0].page}).
+                  </p>
+                )}
               </details>
             )}
           </div>
@@ -301,7 +288,7 @@ function StepAct() {
       })}
       <div className="impact">
         <div>
-          <div className="impact-k">Matti B waits</div>
+          <div className="impact-k">Patient B waits</div>
           <div className="impact-v">
             {d0(c.b.totalMeanDays)}
             <span> days</span>
@@ -311,7 +298,7 @@ function StepAct() {
           </div>
         </div>
         <div>
-          <div className="impact-k">Gap to Matti A</div>
+          <div className="impact-k">Gap to Patient A</div>
           <div className="impact-v" style={{ color: '#f0abfc' }}>
             {d0(c.gapDays)}
             <span> days</span>
@@ -380,7 +367,7 @@ function StepTrust() {
           <b>The AI never invents a number.</b> It estimates effects from cited evidence; the simulator calculates the days; Polku checks every figure.
         </li>
         <li>
-          <b>Honest about uncertainty:</b> Matti B's gap is <b>{d0(sim.comparisonBase.gapDays)} days</b>, and still <b>{d0(cautiousGap)} days</b> with very cautious
+          <b>Honest about uncertainty:</b> Patient B's gap is <b>{d0(sim.comparisonBase.gapDays)} days</b>, and still <b>{d0(cautiousGap)} days</b> with very cautious
           assumptions.
         </li>
         <li>

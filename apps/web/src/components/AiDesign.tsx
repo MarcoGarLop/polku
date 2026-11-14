@@ -29,7 +29,24 @@ export const plainText = (t: string) =>
     .replace(/\s*\(basic_education\)/g, '')
     .replace(/basic_education/g, 'basic education')
     .replace(/share_of_(phase|distance)_days/g, 'days')
-    .replace(/\s{2,}/g, ' ');
+    // [ROADMAP p.13, p.32] → (national roadmap, pages 13 and 32)
+    .replace(/\[(ROADMAP|STRATEGY)\s*p\.?\s*([^\]]+)\]/gi, (_, doc: string, pages: string) => {
+      const ps = pages.split(/,\s*p?\.?\s*/).map((p) => p.trim()).filter(Boolean);
+      return `(national ${doc.toLowerCase()}, page${ps.length > 1 ? 's' : ''} ${ps.join(' and ')})`;
+    })
+    // source ids are listed in the sources panel; in the sentence they are noise
+    .replace(/\s*\((?:S\d{2}(?:[,;]\s*)?)+\)/g, '')
+    .replace(/,?\s*\bS\d{2}\b/g, '')
+    // phase codes → words
+    .replace(/\bP3\s*[-–]\s*P5\b/g, 'referral-to-treatment')
+    .replace(/\bP1\s*[-–]\s*P2\b/g, 'pre-referral')
+    .replace(/\bP1\b/g, 'the time before seeing a doctor')
+    .replace(/\bP2\b/g, 'primary care')
+    .replace(/\bP3\b/g, 'specialist access')
+    .replace(/\bP4\b/g, 'diagnosis')
+    .replace(/\bP5\b/g, 'treatment start')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([.,;])/g, '$1');
 
 /** One line of plain English per estimated effect. */
 export function describeEffects(e: AiEstimate): string[] {
@@ -122,7 +139,7 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
   }, [autoRun]);
 
   const id = reply?.estimate.id;
-  // Matti B before/after computed here with the same engine and rounding as the rest of the page
+  // Patient B before/after computed here with the same engine and rounding as the rest of the page
   const matti = useMemo(() => (reply ? { before: compareProfiles(model, profileA, profileB, []).b.totalMeanDays, after: compareProfiles(model, profileA, profileB, [reply.estimate.id]).b.totalMeanDays } : null), [reply, profileA, profileB]);
   const on = !!id && active.includes(id);
   const toggle = () => {
@@ -165,7 +182,7 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
         <div className="design-result fade-in">
           <div className="row between">
             <b className="design-title">{reply.estimate.label ?? 'New action'}</b>
-            <span className={`badge conf-${reply.estimate.confidence}`}>{reply.estimate.confidence} confidence</span>
+            <span className="conf-text">{reply.estimate.confidence} confidence</span>
           </div>
           <ul className="effects">
             {describeEffects(reply.estimate).map((t) => (
@@ -175,7 +192,7 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
           <p className="design-why">{plainText(reply.estimate.rationale)}</p>
           <div className="design-numbers">
             <div>
-              <span>Matti B</span>
+              <span>Patient B</span>
               <b>
                 {d0(matti?.before ?? reply.results.mattiB.before)} → {d0(matti?.after ?? reply.results.mattiB.after)} days
               </b>
@@ -194,10 +211,11 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
               <b>−{reply.results.equityGapClosed.toFixed(1)} days</b>
             </div>
           </div>
-          <div className="design-src">
-            Roadmap {reply.estimate.roadmapAction || '—'}
-            {reply.estimate.roadmapPage ? ` · p.${reply.estimate.roadmapPage}` : ''} · Evidence: {reply.estimate.evidence.join(', ') || 'none found'}
-          </div>
+          <p className="design-src">
+            {reply.estimate.roadmapAction
+              ? `It fits national roadmap action ${reply.estimate.roadmapAction}${reply.estimate.roadmapPage ? ` (page ${reply.estimate.roadmapPage})` : ''}.`
+              : 'The AI found no matching action in the national roadmap.'}
+          </p>
           <button className={`btn ${on ? '' : 'primary'} wide`} onClick={toggle} aria-pressed={on}>
             {on ? '✓ Added to the plan (click to remove)' : `Add to ${region.nameEn}'s plan`}
           </button>

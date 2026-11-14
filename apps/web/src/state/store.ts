@@ -34,7 +34,7 @@ export const TOUR_STEPS = [
   { id: 'trust', label: 'Trust', ask: 'Reliable, transparent data' },
 ] as const;
 
-/** "What if…" switches in the Why step: change one thing about Matti B. */
+/** "What if…" switches in the Why step: change one thing about Patient B. */
 export interface WhatIf {
   route: boolean; // work health care instead of public
   near: boolean; // lives 10 km from hospital

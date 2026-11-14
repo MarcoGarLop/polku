@@ -60,7 +60,7 @@ Use id "${id}" and a short label.`;
     'Read the national cancer strategy, the roadmap and the evidence notes',
     `Matched the idea to roadmap action ${estimate.roadmapAction || '—'}${estimate.roadmapPage ? ` (p.${estimate.roadmapPage})` : ''}`,
     `Estimated the effect on ${Array.from(new Set(estimate.effects.map((f) => phaseName[f.phase]))).join(', ') || 'no phase'} (${estimate.confidence} confidence)`,
-    `Ran the pathway simulation for ${region.nameEn}, for Matti B and for all 22 regions`,
+    `Ran the pathway simulation for ${region.nameEn}, for Patient B and for all 22 regions`,
   ];
   return { idea, regionId, estimate, trail, results, model: used, ms };
 }
