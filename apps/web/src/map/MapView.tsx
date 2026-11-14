@@ -57,6 +57,7 @@ const shortName = (n: string) => n.replace(/ wellbeing services county/i, '');
 
 export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number]; spec: MetricSpec }) => void }) {
   const geo = useGeo();
+  const buildMap = useStore((s) => s.buildMap);
   const sim = useSim();
   const mode = useStore((s) => s.mode);
   const metric = useStore((s) => s.metric);
@@ -185,7 +186,8 @@ export function MapView({ onDomain }: { onDomain?: (d: { domain: [number, number
   const raisedFeature = useMemo(() => (geo && raised ? geo.regions.find((r) => r.properties.id === raised) : undefined), [geo, raised]);
   const raisedRings = useMemo(() => (raisedFeature ? outerRings(raisedFeature.geometry) : []), [raisedFeature]);
 
-  if (!geo) return <div className="map-loading">Loading Finland…</div>;
+  // the heavy first build waits until the intro animation has finished (it would freeze it)
+  if (!geo || !buildMap) return <div className="map-loading">{buildMap ? 'Loading Finland…' : ''}</div>;
 
   const dimFor = (id: string) => (raised && id !== raised ? 0.62 : 1);
 

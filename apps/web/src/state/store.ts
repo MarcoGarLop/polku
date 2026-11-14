@@ -51,6 +51,8 @@ interface State {
   introDone: boolean;
   /** The map has rendered once (heavy first tessellation done): safe to start smooth animations. */
   mapReady: boolean;
+  /** The 3D map may be built (held back during the intro so the animation stays smooth). */
+  buildMap: boolean;
   askOpen: boolean;
   set: (patch: Partial<State>) => void;
   toggleIntervention: (id: string) => void;
@@ -59,6 +61,11 @@ interface State {
   setMode: (mode: Mode) => void;
   setPatient: (patch: Partial<PatientProfile>) => void;
 }
+
+const SKIP_INTRO =
+  typeof window === 'undefined' ||
+  new URLSearchParams(window.location.search).has('video') ||
+  !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export const useStore = create<State>((set, get) => ({
   mode: 'welcome',
@@ -76,10 +83,8 @@ export const useStore = create<State>((set, get) => ({
   nordicActions: [],
   clean: false,
   mapReady: false,
-  introDone:
-    typeof window === 'undefined' ||
-    new URLSearchParams(window.location.search).has('video') ||
-    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+  introDone: SKIP_INTRO,
+  buildMap: SKIP_INTRO,
   askOpen: false,
   set: (patch) => set(patch),
   toggleIntervention: (id) =>

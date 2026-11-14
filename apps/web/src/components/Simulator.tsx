@@ -12,6 +12,7 @@ import {
   type RouteId,
 } from '@polku/sim';
 import { aiErrorText, compareNordic, type NordicReply } from '../state/api';
+import { offlineNordic } from '../state/offline';
 import { openPlan } from '../state/plan';
 import { model, useSim } from '../state/sim';
 import { MATTI_A, MATTI_B, SECTIONS, useStore } from '../state/store';
@@ -290,11 +291,16 @@ function NordicSection() {
     setOpen(id);
     setError(null);
     if (replies[id] || busy) return;
-    setBusy(id);
-    try {
-      const r = await compareNordic(id);
+    const use = (r: NordicReply) => {
       registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
       setReplies((x) => ({ ...x, [id]: r }));
+    };
+    // the four practices were analysed by Gemini in advance and ship with the app: instant, works offline
+    const recorded = offlineNordic(id);
+    if (recorded) return use(recorded);
+    setBusy(id);
+    try {
+      use(await compareNordic(id));
     } catch (e) {
       setError(aiErrorText(e));
     } finally {

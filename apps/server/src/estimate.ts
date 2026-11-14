@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadCorpus } from './context';
-import { client, FALLBACK_MODEL, MODEL } from './gemini';
+import { client, EXTRA_MODEL, FALLBACK_MODEL, MODEL } from './gemini';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
@@ -92,7 +92,11 @@ ${evidenceDigest()}
 FULL TEXT OF THE NATIONAL CANCER STRATEGY AND ROADMAP (Finnish):
 ${loadCorpus().full}`;
   let lastErr: unknown;
-  for (const model of preferFast ? [FALLBACK_MODEL, MODEL] : [MODEL, FALLBACK_MODEL]) {
+  // Overloaded (503) or rate-limited (429) models are common at peak times: try the next model, then a third
+  // stable one, with a short pause, and give up after ~70 s so the caller can fall back.
+  const chain = Array.from(new Set(preferFast ? [FALLBACK_MODEL, EXTRA_MODEL, MODEL] : [MODEL, FALLBACK_MODEL, EXTRA_MODEL]));
+  for (const [i, model] of chain.entries()) {
+    if (Date.now() - t0 > 70000) break;
     try {
       const res = await client().models.generateContent({
         model,
@@ -103,6 +107,7 @@ ${loadCorpus().full}`;
     } catch (e) {
       lastErr = e;
       console.warn(`! ${model} failed: ${String((e as Error)?.message).slice(0, 200)}`);
+      if (i < chain.length - 1 && /503|429|overload|unavailable|resource/i.test(String((e as Error)?.message))) await new Promise((r) => setTimeout(r, 1500));
     }
   }
   throw lastErr;

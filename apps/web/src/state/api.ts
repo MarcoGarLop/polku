@@ -85,6 +85,8 @@ export interface DesignReply {
   model: string;
   ms: number;
   cached?: boolean;
+  /** Gemini was unavailable: quick offline estimate based on the closest roadmap action. */
+  fallback?: boolean;
 }
 
 /** The AI estimates a new action from the evidence; the server simulates it. */

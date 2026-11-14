@@ -25,3 +25,4 @@ export {
   type Portfolio,
   type LeftBehindRow,
 } from './simulate';
+export { quickEstimate } from './quick';

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { interventionFromAi, profileTotal, registerIntervention, type AiEstimate } from '@polku/sim';
 import { aiErrorText, designAction, type DesignReply } from '../state/api';
+import { offlineDesign } from '../state/offline';
 import { model } from '../state/sim';
 import { useStore } from '../state/store';
 import { d0 } from './ui';
@@ -119,12 +120,17 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
     setBusy(true);
     setError(null);
     setReply(null);
+    // Example ideas are answered instantly from the recorded Gemini answers shipped with the app
+    const recorded = IDEAS.includes(text) ? offlineDesign(text, regionId, patient) : null;
     try {
-      const r = await designAction(text.trim(), regionId, profileA, patient);
-      registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
+      const r = recorded && !recorded.fallback ? recorded : await designAction(text.trim(), regionId, profileA, patient);
+      if (r.estimate.effects.length) registerIntervention(model, interventionFromAi(r.estimate, { model: r.model, custom: true }));
       setReply(r);
     } catch (e: any) {
-      setError(aiErrorText(e));
+      // never leave the user empty-handed: offline estimate from the closest roadmap action
+      const r = offlineDesign(text.trim(), regionId, patient);
+      setReply(r);
+      setError(r.estimate.effects.length ? null : aiErrorText(e));
     } finally {
       setBusy(false);
     }
@@ -179,7 +185,8 @@ export function DesignBox({ regionId, autoRun = false, compact = false }: { regi
       {error && <p className="muted">{error}</p>}
 
       {reply && (
-        <div className="design-result fade-in">
+        <div className={`design-result fade-in ${reply.fallback ? 'is-fallback' : ''}`}>
+          {reply.fallback && <div className="fallback-note">Quick estimate: Gemini was busy, so Polku used the closest roadmap action. Try again later for a full AI estimate.</div>}
           <div className="row between">
             <b className="design-title">{reply.estimate.label ?? 'New action'}</b>
             <span className="conf-text">{reply.estimate.confidence} confidence</span>

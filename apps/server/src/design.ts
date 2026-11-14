@@ -1,4 +1,4 @@
-import { compareProfiles, equityGap, interventionFromAi, nationalMeanTotal, registerIntervention, regionMeanTotal, type AiEstimate, type PatientProfile } from '@polku/sim';
+import { compareProfiles, equityGap, interventionFromAi, nationalMeanTotal, quickEstimate, registerIntervention, regionMeanTotal, type AiEstimate, type PatientProfile } from '@polku/sim';
 import { loadDefaultModel } from '@polku/sim/data';
 import { ESTIMATION_RULES, estimateSchema, geminiJson, sanitize } from './estimate';
 
@@ -20,6 +20,8 @@ export interface DesignResult {
   };
   model: string;
   ms: number;
+  /** True when Gemini was unavailable and Polku used the quick offline estimate. */
+  fallback?: boolean;
 }
 
 const slug = (s: string) => 'ai_' + s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
@@ -38,9 +40,23 @@ export async function designAction(idea: string, regionId: string, a: PatientPro
 ${ESTIMATION_RULES}
 - If the idea is unlikely to shorten the pathway, say so and return small effects.
 Use id "${id}" and a short label.`;
-  // live ideas use the fast model (≈10–20 s); the flagship can take 90 s under load
-  const { data, model: used, ms } = await geminiJson<AiEstimate>(prompt, estimateSchema, true);
-  const estimate = sanitize({ ...data, id });
+  // live ideas use the fast model (≈10–20 s); if every Gemini model is overloaded, fall back to a quick offline
+  // estimate based on the most similar roadmap action (clearly labelled as such)
+  const t0 = Date.now();
+  let estimate: AiEstimate;
+  let used = 'offline';
+  let fallback = false;
+  try {
+    const g = await geminiJson<AiEstimate>(prompt, estimateSchema, true);
+    estimate = sanitize({ ...g.data, id });
+    used = g.model;
+  } catch (e) {
+    console.warn(`! design falls back to quick estimate: ${String((e as Error)?.message).slice(0, 120)}`);
+    const q = quickEstimate(model, idea);
+    estimate = { ...q, id };
+    fallback = true;
+  }
+  const ms = Date.now() - t0;
   const iv = interventionFromAi(estimate, { model: used, custom: true });
   registerIntervention(model, iv);
 
@@ -56,11 +72,19 @@ Use id "${id}" and a short label.`;
     nationalDaysSavedIfEverywhere: r1(nationalMeanTotal(model) - nationalMeanTotal(model, [id])),
   };
   const phaseName: Record<string, string> = { P1: 'noticing symptoms', P2: 'primary care', P3: 'getting to a specialist', P4: 'diagnosis', P5: 'starting treatment' };
-  const trail = [
-    'Read the national cancer strategy, the roadmap and the evidence notes',
-    `Matched the idea to roadmap action ${estimate.roadmapAction || '—'}${estimate.roadmapPage ? ` (p.${estimate.roadmapPage})` : ''}`,
-    `Estimated the effect on ${Array.from(new Set(estimate.effects.map((f) => phaseName[f.phase]))).join(', ') || 'no phase'} (${estimate.confidence} confidence)`,
-    `Ran the pathway simulation for ${region.nameEn}, for Patient B and for all 22 regions`,
-  ];
-  return { idea, regionId, estimate, trail, results, model: used, ms };
+  const roadmap = estimate.roadmapAction ? `${estimate.roadmapAction}${estimate.roadmapPage ? ` (p.${estimate.roadmapPage})` : ''}` : '';
+  const trail = fallback
+    ? [
+        'Gemini was busy, so Polku estimated the idea offline',
+        roadmap ? `Matched it to the closest roadmap action ${roadmap}` : 'Found no close match in the national roadmap',
+        'Reused the effect the AI estimated earlier for that action, with a wider range',
+        `Ran the pathway simulation for ${region.nameEn} and for all 22 regions`,
+      ]
+    : [
+        'Read the national cancer strategy, the roadmap and the evidence notes',
+        `Matched the idea to roadmap action ${roadmap || '—'}`,
+        `Estimated the effect on ${Array.from(new Set(estimate.effects.map((f) => phaseName[f.phase]))).join(', ') || 'no phase'} (${estimate.confidence} confidence)`,
+        `Ran the pathway simulation for ${region.nameEn}, for this patient and for all 22 regions`,
+      ];
+  return { idea, regionId, estimate, trail, results, model: used, ms, fallback };
 }

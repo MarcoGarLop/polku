@@ -4,6 +4,8 @@ import { declarations } from './tools';
 
 export const MODEL = process.env.GEMINI_MODEL || 'gemini-4-argon';
 export const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.8-flash';
+/** A third, long-stable model used when the other two are overloaded. */
+export const EXTRA_MODEL = process.env.GEMINI_EXTRA_MODEL || 'gemini-2.5-flash';
 
 export const SYSTEM = `You are Polku, an AI analyst that helps Finnish wellbeing services county planners and FICAN make lung cancer care faster and more equal.
 Your audience is a non-technical county director with two minutes.
@@ -75,7 +77,7 @@ export async function generate(
   contents: Content[],
   opts: { useFallback?: boolean; extra?: GenerateContentConfig } = {},
 ): Promise<{ res: GenerateContentResponse; model: string; mode: 'full-context' }> {
-  const models = opts.useFallback ? [FALLBACK_MODEL] : [MODEL, FALLBACK_MODEL];
+  const models = opts.useFallback ? [FALLBACK_MODEL, EXTRA_MODEL] : [MODEL, FALLBACK_MODEL, EXTRA_MODEL];
   let lastErr: unknown;
   for (const model of models) {
     try {

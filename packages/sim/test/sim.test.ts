@@ -20,6 +20,7 @@ import {
   interventionFromAi,
   profileBuildUp,
   profileTotal,
+  quickEstimate,
   type PatientProfile,
 } from '../src';
 import { loadDefaultModel } from '../src/data';
@@ -222,5 +223,16 @@ describe('build-up', () => {
     const sum = steps.reduce((s, x) => s + x.delta, steps[0].total);
     expect(sum).toBeCloseTo(steps.at(-1)!.total, 6);
     expect(steps.find((s) => s.key === 'route')!.delta).toBeGreaterThan(0);
+  });
+});
+
+describe('offline quick estimate', () => {
+  it('matches an idea to the closest roadmap action and saves days', () => {
+    const model = loadDefaultModel();
+    const est = quickEstimate(model, 'Volunteer drivers for patients far from hospital');
+    expect(est.matchedId).toBe('travel_cost_support');
+    expect(est.effects.length).toBeGreaterThan(0);
+    expect(est.confidence).toBe('low');
+    expect(quickEstimate(model, 'paint the hospital walls blue').effects).toHaveLength(0);
   });
 });
