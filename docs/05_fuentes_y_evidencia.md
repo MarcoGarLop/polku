@@ -1,0 +1,65 @@
+# 05 · Fuentes y evidencia
+
+> Los `source_id` (S01…) se usan en `data/seed/pathway_parameters.json` y deben aparecer en la UI (tooltip ⓘ) y en las respuestas del agente.
+> Confianza: **high** (registro/documento oficial) · **medium** (estudio publicado o fuente institucional secundaria) · **low** (preliminar, observacional, no específico) · **assumption** (supuesto del equipo, editable).
+> Investigación hecha el 13-nov-2026. Las URLs marcadas "(verificar)" no se pudieron abrir o se citan vía fuente secundaria.
+
+## Fuentes oficiales del reto (texto íntegro en `docs/fuentes/`)
+| ID | Fuente | Qué aporta | Confianza |
+|---|---|---|---|
+| S19 | **Estrategia nacional del cáncer 2026–2035** (STM) | Objetivos e indicadores (pág. 5: pulmón +14 pp de supervivencia a 5 años hasta nivel nórdico; mortalidad −10 %; tratamiento dentro de plazos objetivo). Pág. 30: el tiempo síntoma→diagnóstico **no se recoge sistemáticamente**; el estadio solo consta en ~40 % de los casos. | high |
+| S03 | **Hoja de ruta de implementación 2026–2031** (FICAN/STM) | Págs. 12–13: gran variación regional del tiempo síntoma→diagnóstico→tratamiento; distancias >400 km al hospital central y >700 km al universitario. Pág. 23: el estigma del cáncer de pulmón retrasa la consulta. Págs. 51–53: acciones 2.5.1 (omalääkäri) y 2.5.2 (criterios de derivación estandarizados según modelos nórdicos; 5 cánceres y pilotos regionales en 2026–2028). Págs. 54–58: 3.1.1–3.1.4 (hoja de ruta nacional del paciente, plazos de acceso por cáncer en 2026–2028; presupuesto 25 M€/5 años). Págs. 73–74: 3.5.3 (recorridos digitales e IA, 1,14 M€). | high |
+
+## Tiempos del recorrido en cáncer de pulmón
+| ID | Fuente | Cifras clave | Confianza |
+|---|---|---|---|
+| S01 | Yle MOT (2025), [Cancer treatment delays in Finland lead to poorer outcomes than in Nordics](https://yle.fi/a/74-20251023) — resultados **no publicados** del estudio coordinado por Outi Kuittinen (UEF) en Kuopio, Tampere, Turku y Rovaniemi | Síntoma→tratamiento **155 d** de media en Finlandia: >50 d paciente, 41 d primaria, 58 d especializada. **Suecia 107 d, Dinamarca 67 d.** Sin desglose por hospital. | low (preliminar) |
+| S02 | Khalife et al., *Acta Oncologica* 2025, [Comparative study of lung cancer care and survival outcomes across the Nordic countries](https://pmc.ncbi.nlm.nih.gov/articles/PMC12160590/) — encuesta a profesionales (42 respuestas analizadas; 8 de 21 regiones finlandesas; financiado por MSD Finland) | Síntoma→cita en primaria: FI **14 d** ("a menudo hasta un mes") vs 2–7 d resto; médico de cabecera→especialista FI 2–4 sem vs 1–2; especialista→diagnóstico 4 sem. Solo un encuestado finlandés citó el TAC como opción en primaria; **Finlandia tiene la menor densidad de TAC** nórdica. **17 % en estadio I** vs >25 % DK/NO. Hombres, supervivencia relativa a 5 años 2018–22: FI 16,7 % vs DK 26,2 %. 2023: 35 % esperó >14 d para ver a un médico de primaria. | medium |
+| S04 | Estudio de un solo centro, Oulu, *Acta Oncologica* 2019, [Association of diagnostic delays to survival in lung cancer](https://pubmed.ncbi.nlm.nih.gov/30938249/) | Medianas: derivación→tratamiento **65 d**, derivación→diagnóstico **33 d**, diagnóstico→tratamiento **27 d**. Los autores no hallaron peor supervivencia con estudios más largos → **no prometer supervivencia**. | medium |
+| S05 | TYKS, [Keuhkosyövän hoitoonpääsyajat](https://www.tyks.fi/potilaille-ja-laheisille/hoidot-ja-tutkimukset/syopa/keuhkosyovan-hoitoonpaasyajat) | Medias ene–jun 2025 (jul–dic 2024): derivación→primer contacto **9 d (13)**; decisión→cirugía **10 d (13)**; derivación→quimioterapia **35 d (33)**. | high (dato de un hospital) |
+| S20 | Salomaa et al., *Chest* 2005 (Turku), [Delays in the diagnosis and treatment of lung cancer](https://pubmed.ncbi.nlm.nih.gov/16236885/) | Medianas: médico de cabecera hasta derivar 16 d; derivación 8 d; 1.ª visita especialista→diagnóstico 15 d; 61 % tratado en < 2 meses. Antiguo. | low |
+| S21 | Tesis HYKS, [Keuhkosyöpäpotilaan hoitoprosessin arviointi HYKS:ssä](https://helda.helsinki.fi/handle/10138/174415) | Derivación aceptada→tratamiento mediana **61 d (rango 8–307)** → justifica la distribución con cola larga. | low |
+| S22 | THL Ohjaus 21/2016, [Hoitoonpääsyn seuranta syövän hoidossa](https://www.julkari.fi/items/0424a55a-f159-406f-8883-5dfdad4d6772) (verificar: el PDF dio 404) | Define los puntos de medición (Hilmo). Plazo citado: ≤62 d hasta el 1.er tratamiento tras derivación desde cribado. **Pedir a las mentoras los plazos de pulmón.** | medium |
+
+## Benchmarks nórdicos e intervenciones
+| ID | Fuente | Cifras clave | Confianza |
+|---|---|---|---|
+| S06 | Helsedirektoratet, [Forløpstider i pakkeforløp for lungekreft](https://www.helsedirektoratet.no/nasjonale-forlop/lungekreft/forlopstider-i-pakkeforlop-for-lungekreft); tesis NTNU, [Timelines in Lung Cancer Diagnostic Workup](https://ntnuopen.ntnu.no/ntnu-xmlui/handle/11250/2637844) | Noruega: ≤35 d (quimioterapia) / ≤42 d (cirugía o radioterapia) desde la derivación; objetivo: 70 % dentro de plazo. Estudio: solo el 40 % empezó en ≤42 d; con un estudio óptimo podría pasar al 80 %. | medium |
+| S07 | RCC, [SVF lungcancer](https://kunskapsbanken.cancercentrum.se/diagnoser/lungcancer/vardforlopp/); [informe nacional NLCR 2024](https://cancercentrum.se/download/18.7d1de12419afcbb274f2d4c8/1765795067212/20251212_nlcr_nationell_rapport2024.pdf) (verificar) | Suecia: 40 d (fármacos) / 44 d (cirugía o radioterapia) desde la sospecha fundada; objetivo 80 %, se cumple en **~36 %**, sin mejora con los años → **los circuitos rápidos tienen riesgo de implantación**. | medium |
+| S14 | Dinamarca CPP: [BMC Cancer 2017, Prognostic consequences of implementing cancer patient pathways](https://link.springer.com/article/10.1186/s12885-017-3623-8); [All.Can, Danish Cancer Patient Pathways](https://www.all-can.org/efficiency-hub/danish-cancer-patient-pathways-three-legged-strategy-for-faster-referral-and-diagnosis-of-cancer/) | Tras los CPP: mayor supervivencia en pacientes sintomáticos de primaria; pulmón, espera hasta diagnóstico **49→35 d** y supervivencia relativa a 3 años 11 %→20 % (fuente secundaria, verificar); sesgo de adelanto (lead-time) <15 %. | medium |
+| S15 | eConsulta: [revisión sistemática 2016](https://pubmed.ncbi.nlm.nih.gov/27075028/); [Becker's sobre el estudio de LA County](https://www.beckershospitalreview.com/healthcare-information-technology/study-physician-to-physician-electronic-consults-improve-patients-access-to-care) | Respuesta del especialista 4,6 h–3,9 d; derivaciones evitadas 12–84 %; LA County 63→52 d; ECA 5 vs 24 d. No específico de cáncer. | low/medium |
+| S16 | Enfermera gestora de caso: Zibrik et al., *J Oncol Pract* 2016 (doi 10.1200/jop.2015.008813); [Kunos et al., JCSO 2015](https://cdn.mdedge.com/files/s3fs-public/issues/articles/JCSO_june_224_Kunos_Orig.pdf) | Derivación→tratamiento sistémico **48→38 d**; sospecha en radiografía→tratamiento **64→45 d**. Observacional. | low |
+| S17 | [ECA danés: acceso directo a TAC desde primaria](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4660800/) (BMC Cancer 2015) | **Sin reducción significativa** del tiempo hasta el diagnóstico ni del estadio (análisis por intención de tratar). | medium |
+| S18 | Paakkola et al., *Acta Oncologica* 2024, [Area-based disparities in NSCLC survival](https://medicaljournalssweden.se/actaoncologica/article/view/27507) | Vaasa 2016–20, n=321: vivir a >50 km → mortalidad a 12 meses HR **1,47** (IC 95 % 1,07–2,01), ajustado por estado funcional, fragilidad y estadio. | medium |
+| S24 | England et al., Gales 2021, [Examining the diagnostic pathway for lung cancer patients in Wales using discrete event simulation](https://tlcr.amegroups.org/article/view/50482/html); [modelo de Aneurin Bevan](https://pmc.ncbi.nlm.nih.gov/articles/PMC9901409) | Simulación validada: unos **20 días menos** con primera consulta en ≤7 d y pruebas agilizadas; tratamiento ≤21 d tras el diagnóstico → casi todos cumplen el objetivo de 62 d. Aneurin Bevan: **+21 %** dentro del objetivo de 62 d. | medium |
+
+## Presentación de AstraZeneca (13-nov-2026) y equidad socioeconómica
+| ID | Fuente | Cifras clave | Confianza |
+|---|---|---|---|
+| S25 | Kuitunen et al., *Cancer Medicine* 2026;15:e71920 (DLBCL, Finlandia), en la diapositiva 11 de la presentación de AstraZeneca | Días acumulados desde el síntoma, privada/laboral frente a pública: primer contacto 42/72 · derivación 77/147 · especialista 118/204 · **tratamiento 123/207**. Otro cáncer: usar como **supuesto** para pulmón. | medium (low para pulmón) |
+| S26 | Zai et al., *BMJ Public Health* 2025;3:e002829 (Finlandia 2000–2019, N = 469 522) | Más frente a menos educación: cirugía 51 % vs 36 %, radioterapia 25 % vs 14 %, quimioterapia 24 % vs 15 %; **mortalidad por cáncer 27 % vs 47 %**; menos educación → más cáncer de pulmón y estadio más avanzado. | high |
+| S27 | Kuitunen H., "Equitable Cancer Care – How Can We Ensure It in Finland" (Pohde/OYS), material de AstraZeneca FI18583-11-26 | Ley de cuidados inversos; sistemas paralelos; los costes directos y de viaje retrasan las pruebas; recorrido en 8 pasos (retraso del paciente frente al del sistema); "not everything for everyone — consistent evidence-based criteria". | medium |
+| S28 | Revisión nórdica, *Acta Oncologica* 2022;61(11):1317–1331 (98 estudios) y Tokola et al., *Cancer Medicine* 2025;14(22) | Nivel socioeconómico bajo → estadio más avanzado, menos tratamiento activo y peor supervivencia. DLBCL: síntoma→diagnóstico >7 semanas asociado a peor supervivencia libre de progresión. | medium |
+
+## Contexto nacional de pulmón y acceso
+| ID | Fuente | Cifras clave | Confianza |
+|---|---|---|---|
+| S08 | Verkkouutiset 2-dic-2024, [Keuhkosyövän hoidossa on suuria alueellisia eroja](https://www.verkkouutiset.fi/a/keuhkosyovan-hoidossa-on-suuria-alueellisia-eroja/) (sobre el 1.er informe de pulmón del Registro del Cáncer, 2018–2022) | ~3 000 casos/año; 1.er tratamiento: ~1/10 cirugía, ~1/3 radioterapia, ~1/5 fármacos; Sisä-Suomi opera más; Este y Norte usan más radioterapia o fármacos de inicio; ~la mitad sin registro de tratamiento. Muertes 2022: 2 410. | medium |
+| S09 | Verkkouutiset 23-abr-2026, [Keuhkosyöpä todetaan usein liian myöhään](https://www.verkkouutiset.fi/a/keuhkosyopa-todetaan-usein-liian-myohaan-vain-joka-neljas-saa-parantavaa-hoitoa/) (proyecto del registro nacional de calidad, 2019–2023) | Solo el **27 %** recibe tratamiento curativo; extensión desconocida en casi la mitad; diferencias regionales de diagnóstico (sin cifras por región en el artículo). | medium |
+| S10 | Helsinki Times 3-jun-2026, [Primary care waiting times increased in 2025, says THL](https://www.helsinkitimes.fi/lifestyle/health-a-wellbeing/28899-primary-care-waiting-times-increased-in-2025-says-thl.html) | 2025: solo el **59 %** de los adultos vio a un médico en ≤2 semanas; el máximo legal en adultos pasó de 14 d a 3 meses; >6 meses en especializada: 14,7 %→12,7 %. | medium |
+| S23 | [NORDCAN](https://nordcan.iarc.fr) | Incidencia y supervivencia por país (FI, SE, NO, DK). | high |
+| — | Informe del Registro del Cáncer, [Keuhkosyöpä Suomessa](https://syoparekisteri.fi/assets/files/2024/12/Keuhkosyopa_Suomessa.pdf) | **Probablemente contiene tablas por región. La web bloquea descargas automáticas (403): descargarlo a mano en el navegador** y extraer los datos regionales. ⭐ Prioridad para la persona de datos. | — |
+
+## Datos regionales a descargar (scripts en `scripts/`)
+| ID | Dato | Dónde | Notas |
+|---|---|---|---|
+| S11 | Acceso a primaria (% de citas médicas en ≤14 d) y esperas en especializada, **por región de bienestar** | THL, informes de acceso a la atención (actualización mensual por región); [Sotkanet](https://sotkanet.fi) (API JSON pública) | Si no hay API, descargar CSV a mano. Guardar año y mes. |
+| S12 | Distancias km municipio→hospital | Calculadas: [límites municipales de Tilastokeskus (GeoJSON)](https://stat.fi/org/avoindata/paikkatietoaineistot/kuntapohjaiset_tilastointialueet_en.html) + población municipal + `regions.json` | Haversine; ponderar por población. |
+| S13 | Población e indicadores socioeconómicos por región | [StatFin](https://pxdata.stat.fi) (API PxWeb) | Clasificación: 21 regiones + Helsinki (+ Åland, excluida). |
+| — | Polígonos de las regiones de bienestar | Mismo conjunto de Tilastokeskus (incluye la capa de región de bienestar) o disolver los municipios por región con `@turf/dissolve` | Simplificar a ~1–2 MB para el navegador (mapshaper). |
+
+## Cosas que NO se pudieron verificar (no usarlas como hechos)
+- Plazos oficiales finlandeses de acceso específicos de pulmón (THL 21/2016): PDF no accesible.
+- Supervivencia de pulmón por región finlandesa: buscar en "Keuhkosyöpä Suomessa" (descarga manual) o en la app de estadísticas del Registro del Cáncer.
+- Lista completa de unidades de radioterapia (en `regions.json`, `has_radiotherapy: null` = por verificar).
+- Desglose por hospital del estudio Kuittinen (S01): preguntar a las mentoras de AstraZeneca.

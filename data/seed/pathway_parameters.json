@@ -1,0 +1,192 @@
+{
+  "_readme": "Parámetros del modelo Polku. Cada valor lleva source_id (ver docs/05_fuentes_y_evidencia.md) y confidence: high | medium | low | assumption. La UI debe mostrar 'Estimate' para low/assumption. Editar aquí, no en el código.",
+  "version": "0.1-2026-11-13",
+  "cancer": "lung (ICD-10 C34)",
+  "national": {
+    "annual_new_cases": { "value": 3000, "source_id": "S08", "confidence": "medium", "note": "'Casi 3 000' casos/año según Syöpärekisteri/Syöpäjärjestöt" },
+    "annual_deaths": { "value": 2410, "source_id": "S08", "confidence": "high", "note": "2022" },
+    "share_stage_I": { "value": 0.17, "source_id": "S02", "confidence": "medium", "note": "vs >25 % en Dinamarca y Noruega" },
+    "share_curative_treatment": { "value": 0.27, "source_id": "S09", "confidence": "medium", "note": "Laaturekisterihanke 2019–2023" },
+    "share_adults_gp_within_14d_2025": { "value": 0.59, "source_id": "S10", "confidence": "medium" }
+  },
+  "phases": [
+    { "id": "P1", "label": "Patient interval", "from": "first symptom", "to": "first healthcare contact", "mean_days": 55, "cv": 0.8, "source_id": "S01", "confidence": "low", "note": "'Más de 50 días' atribuidos al paciente (preliminar)" },
+    { "id": "P2", "label": "Primary care interval", "from": "first contact", "to": "referral sent", "mean_days": 41, "cv": 0.8, "source_id": "S01", "confidence": "low", "note": "41 días en atención primaria (preliminar)" },
+    { "id": "P3", "label": "Specialist access", "from": "referral received", "to": "first specialist contact", "mean_days": 12, "cv": 0.6, "source_id": "S05", "confidence": "medium", "note": "TYKS 9–13 d de media (2024–25); encuesta nórdica 2–4 semanas" },
+    { "id": "P4", "label": "Diagnostic work-up", "from": "first specialist contact", "to": "diagnosis", "mean_days": 22, "cv": 0.7, "source_id": "S04", "confidence": "medium", "note": "Oulu: derivación→diagnóstico 33 d (mediana)" },
+    { "id": "P5", "label": "Treatment start", "from": "diagnosis", "to": "first treatment", "mean_days": 24, "cv": 0.7, "source_id": "S04", "confidence": "medium", "note": "Oulu: diagnóstico→tratamiento 27 d (mediana)" }
+  ],
+  "comparators_total_days": {
+    "finland": { "value": 155, "source_id": "S01", "confidence": "low", "note": "preliminar" },
+    "sweden": { "value": 107, "source_id": "S01", "confidence": "low", "note": "preliminar, sin desglose por fase" },
+    "denmark": { "value": 67, "source_id": "S01", "confidence": "low", "note": "preliminar, sin desglose por fase" }
+  },
+  "benchmark": {
+    "id": "referral_to_treatment",
+    "phases": ["P3", "P4", "P5"],
+    "max_days": 42,
+    "source_id": "S06",
+    "confidence": "medium",
+    "note": "Noruega ≤42 d (cirugía/RT) desde la derivación; Suecia 40/44 d desde sospecha fundada (S07). Editable."
+  },
+  "entry_routes": {
+    "_note": "Segundo eje de equidad (docs/10). Multiplicadores relativos tomados de DLBCL (Kuitunen 2026) y trasladados a pulmón como SUPUESTO. Calibrar para que la media nacional ponderada siga reproduciendo las medias de fase.",
+    "routes": [
+      { "id": "public", "label": "Public primary care", "multipliers": { "P1": 1.0, "P2": 1.0, "P3": 1.0, "P4": 1.0, "P5": 1.0 } },
+      { "id": "occupational_private", "label": "Occupational / private care", "multipliers": { "P1": 0.52, "P2": 0.52, "P3": 0.77, "P4": 0.77, "P5": 0.77 } }
+    ],
+    "share_occupational_private": { "value": 0.25, "proxy": "regional employment rate (15–64) or working-age share of cancer patients; StatFin", "source_id": "S25", "confidence": "assumption", "note": "Estrategia pág. 6: ~1/3 de los pacientes con cáncer (todos los tipos) en edad laboral. En pulmón la mayoría está jubilada → bajado a 0,25 (supuesto). Verificar con NORDCAN (edad) o Kaisa." },
+    "source_id": "S25",
+    "confidence": "low",
+    "evidence": "DLBCL Finland: symptom→treatment 123 d (private/occupational) vs 207 d (public); symptom→referral 77 vs 147 d."
+  },
+  "patient_factors": {
+    "_note": "Perfil de paciente (docs/11). Multiplicadores relativos por fase; el motor los normaliza con las proporciones para que la media nacional no cambie. Fases no listadas = 1.",
+    "education": {
+      "levels": [
+        { "id": "basic", "label": "Basic education", "share": 0.45, "multipliers": { "P1": 1.25, "P2": 1.10 } },
+        { "id": "secondary", "label": "Secondary education", "share": 0.40, "multipliers": {} },
+        { "id": "tertiary", "label": "Higher education", "share": 0.15, "multipliers": { "P1": 0.85, "P2": 0.95 } }
+      ],
+      "source_ids": ["S25", "S26", "S28"], "confidence": "assumption",
+      "evidence": "AZ briefing (Kuitunen): lower SES associated with longer time to treatment (DLBCL). Zai 2025: lower education → more lung cancer, later stage, less surgery. Effect sizes on days are team assumptions (health literacy → help-seeking)."
+    },
+    "navigation_barrier": {
+      "label": "Barriers to navigating care (lives alone, other language, or 75+)",
+      "share": 0.35,
+      "multipliers": { "P1": 1.15, "P3": 1.15, "P5": 1.15 },
+      "source_ids": ["S27"], "confidence": "assumption",
+      "evidence": "AZ briefing slides 8 and 10: limited health literacy, fragmented pathways and hand-offs; gaps for vulnerable populations. Effect sizes are team assumptions."
+    },
+    "distance": {
+      "min_km": 5,
+      "fallback_region_km": 40,
+      "note": "Distancia del perfil relativa a la referencia nacional, con las elasticidades de dist_central (P1, P4) y dist_rt (P5). fallback_region_km = distancia supuesta mientras no haya datos reales de distancia por región.",
+      "source_ids": ["S18", "S03"], "confidence": "low"
+    }
+  },
+  "pathway_steps": {
+    "_note": "8 pasos de la diapositiva 10 de AZ (S27) y cómo se reparten las 5 fases del modelo. Repartos = supuesto.",
+    "steps": [
+      { "id": 1, "label": "Symptoms begin", "kind": "patient" },
+      { "id": 2, "label": "Considering seeking care", "kind": "patient" },
+      { "id": 3, "label": "First healthcare contact", "kind": "system" },
+      { "id": 4, "label": "Physician assessment", "kind": "system" },
+      { "id": 5, "label": "Tests and referrals", "kind": "system" },
+      { "id": 6, "label": "Diagnosis", "kind": "system" },
+      { "id": 7, "label": "MDT treatment plan", "kind": "system" },
+      { "id": 8, "label": "Treatment starts", "kind": "system" }
+    ],
+    "segments": [
+      { "to_step": 3, "from_phase": "P1", "share": 1.0 },
+      { "to_step": 4, "from_phase": "P2", "share": 0.3 },
+      { "to_step": 5, "from_phase": "P2", "share": 0.7 },
+      { "to_step": 6, "from_phases": ["P3", "P4"], "share": 1.0 },
+      { "to_step": 7, "from_phase": "P5", "share": 0.4 },
+      { "to_step": 8, "from_phase": "P5", "share": 0.6 }
+    ],
+    "source_ids": ["S27", "S25"], "confidence": "assumption"
+  },
+  "prioritisation": {
+    "effort_points": { "low": 1, "medium": 2, "high": 3 },
+    "budgets": { "low": 2, "medium": 4, "high": 6 },
+    "priority_weights": { "speed": 0.0, "balanced": 0.5, "equity": 1.0 },
+    "note": "Score = (1-w)·días ahorrados (paciente medio, normalizado) + w·brecha cerrada (perfil peor vs mejor, normalizada). Sin euros: el esfuerzo es cualitativo y explícito."
+  },
+  "outcome_context": {
+    "_note": "Datos REALES (no modelados) para la tarjeta 'Why days matter'.",
+    "education_gap": { "surgery": [0.51, 0.36], "radiotherapy": [0.25, 0.14], "chemotherapy": [0.24, 0.15], "cancer_mortality": [0.27, 0.47], "labels": ["higher education", "lower education"], "source_id": "S26", "confidence": "high", "note": "Zai et al. BMJ Public Health 2025, todos los cánceres, Finlandia 2000–2019" },
+    "distance": { "hr_12m_mortality_over_50km": 1.47, "ci": [1.07, 2.01], "source_id": "S18", "confidence": "medium" },
+    "stage_I_share": { "finland": 0.17, "denmark_norway": ">0.25", "source_id": "S02", "confidence": "medium" }
+  },
+  "regional_drivers": [
+    { "id": "pc_access", "indicator": "1 - share of adults seeing a GP within 14 days", "source_id": "S11", "elasticities": { "P2": 0.5, "P1": 0.1 }, "confidence": "assumption" },
+    { "id": "spec_wait", "indicator": "share waiting > 3 (or 6) months in specialist care", "source_id": "S11", "elasticities": { "P3": 0.4, "P4": 0.2 }, "confidence": "assumption" },
+    { "id": "dist_central", "indicator": "population-weighted km to central hospital", "source_id": "S12", "elasticities": { "P1": 0.1, "P4": 0.15 }, "confidence": "assumption" },
+    { "id": "dist_rt", "indicator": "population-weighted km to nearest radiotherapy / university hospital", "source_id": "S12", "elasticities": { "P5": 0.2 }, "confidence": "assumption" },
+    { "id": "ses", "indicator": "inverse socioeconomic index (e.g. 1 / share with tertiary education)", "source_id": "S13", "elasticities": { "P1": 0.15 }, "confidence": "assumption" }
+  ],
+  "interventions": [
+    {
+      "id": "fast_track", "label": "Standardised fast-track pathway (Nordic model)",
+      "effects": [ { "phase": "P3", "reduction": 0.25, "range": [0.15, 0.35] }, { "phase": "P4", "reduction": 0.25, "range": [0.15, 0.35] }, { "phase": "P5", "reduction": 0.20, "range": [0.10, 0.30] } ],
+      "evidence": "Denmark CPP: wait to diagnosis 49→35 d; Norway: optimal work-up could lift within-target 40%→80%; Sweden SVF: only 36% meet lead-time targets (implementation risk). Wales DES: ~20 days saved with first outpatient ≤7 d + streamlined tests.",
+      "source_ids": ["S14", "S06", "S07", "S24"], "confidence": "medium",
+      "roadmap_actions": [ { "id": "2.5.2", "page": 52 }, { "id": "3.1.2", "page": 56 } ],
+      "cost_note": "Within roadmap action 3.1.1 budget: 5 M€/year, 25 M€ over 5 years nationally (covers 2.5.2, 3.1.2–3.1.4, 4.3.2).", "effort": "high"
+    },
+    {
+      "id": "econsult", "label": "e-consultation primary care ↔ pulmonology",
+      "effects": [ { "phase": "P3", "reduction": 0.40, "range": [0.20, 0.60] }, { "phase": "P2", "reduction": 0.10, "range": [0.0, 0.20] } ],
+      "evidence": "Systematic review: specialist response 4.6 h–3.9 d; LA County median wait 63→52 d; RCT 5 vs 24 d. Not cancer-specific.",
+      "source_ids": ["S15"], "confidence": "low",
+      "roadmap_actions": [ { "id": "3.5.3", "page": 73 } ],
+      "cost_note": "Part of roadmap action 3.5.3: 1.14 M€ nationally for digital pathways and AI tools.", "effort": "medium"
+    },
+    {
+      "id": "navigator", "label": "Named care coordinator / nurse navigator",
+      "effects": [ { "phase": "P4", "reduction": 0.15, "range": [0.05, 0.25] }, { "phase": "P5", "reduction": 0.20, "range": [0.10, 0.30] }, { "phase": "P3", "reduction": 0.25, "range": [0.10, 0.40], "when": { "navigationBarrier": true } } ],
+      "evidence": "Observational: BC Cancer referral→systemic therapy 48→38 d; Akron suspicion→treatment 64→45 d. Targeted at patients with navigation barriers (extra effect on the referral hand-off = assumption).",
+      "source_ids": ["S16"], "confidence": "low",
+      "roadmap_actions": [ { "id": "1.2", "page": 30 } ],
+      "cost_note": "Staff cost. Assumption: 1 FTE per ~100 lung cancer cases/year.", "effort": "medium"
+    },
+    {
+      "id": "direct_ct", "label": "Direct CT access from primary care",
+      "effects": [ { "phase": "P2", "reduction": 0.10, "range": [0.0, 0.20] } ],
+      "evidence": "Danish cluster RCT (Aarhus): no significant reduction in time to diagnosis or stage (ITT). Finland has the fewest CT scanners per capita in the Nordics.",
+      "source_ids": ["S17", "S02"], "confidence": "low",
+      "roadmap_actions": [ { "id": "2.5.2", "page": 52 } ],
+      "cost_note": "Imaging capacity; high.", "effort": "high"
+    },
+    {
+      "id": "gp_continuity", "label": "Named GP / continuity of care (omalääkäri)",
+      "effects": [ { "phase": "P2", "reduction": 0.10, "range": [0.0, 0.20] }, { "phase": "P1", "reduction": 0.05, "range": [0.0, 0.10] } ],
+      "evidence": "Continuity of care rationale; no lung-specific effect size found.",
+      "source_ids": ["S03"], "confidence": "assumption",
+      "roadmap_actions": [ { "id": "2.5.1", "page": 51 } ],
+      "cost_note": "National omalääkäri programme.", "effort": "high"
+    },
+    {
+      "id": "awareness", "label": "Multilingual symptom-awareness and anti-stigma campaign",
+      "effects": [ { "phase": "P1", "reduction": 0.10, "range": [0.0, 0.15] }, { "phase": "P1", "reduction": 0.05, "range": [0.0, 0.10], "when": { "education": "basic" } } ],
+      "evidence": "Roadmap p.23: lung cancer stigma delays help-seeking. Strategy 1.3: culturally adapted communication. No effect size found.",
+      "source_ids": ["S03"], "confidence": "assumption",
+      "roadmap_actions": [ { "id": "1.3", "page": 33 } ],
+      "cost_note": "Low.", "effort": "low"
+    },
+    {
+      "id": "remote_care", "label": "Remote oncology consultations + travel coordination",
+      "effects": [ { "phase": "P4", "reduction_of_distance_component": 0.5, "range": [0.25, 0.70] }, { "phase": "P5", "reduction_of_distance_component": 0.5, "range": [0.25, 0.70] } ],
+      "evidence": "Roadmap p.13 (deliver what can be decentralised close to home); Paakkola 2024: >50 km from hospital HR 1.47 for 12-month mortality.",
+      "source_ids": ["S03", "S18"], "confidence": "low",
+      "roadmap_actions": [ { "id": "3.5.3", "page": 73 } ],
+      "cost_note": "Medium.", "effort": "medium"
+    },
+    {
+      "id": "public_fast_lane", "label": "Public fast lane for suspected cancer (close the public/private gap)",
+      "effects": [ { "phase": "P2", "route": "public", "reduction": 0.30, "range": [0.15, 0.45] }, { "phase": "P3", "route": "public", "reduction": 0.15, "range": [0.05, 0.25] } ],
+      "evidence": "Inverse care law: public route reaches treatment ~84 days later than occupational/private in Finnish DLBCL data, mostly before referral. Effect size is an assumption.",
+      "source_ids": ["S25", "S27"], "confidence": "assumption",
+      "roadmap_actions": [ { "id": "2.5.2", "page": 52 } ],
+      "cost_note": "Within standardised referral criteria work (3.1.1 budget).", "effort": "medium"
+    },
+    {
+      "id": "travel_cost_support", "label": "Travel coordination and cost cover for remote / low-income patients",
+      "effects": [ { "phase": "P4", "reduction_of_distance_component": 0.3, "range": [0.1, 0.5] }, { "phase": "P5", "reduction_of_distance_component": 0.3, "range": [0.1, 0.5] }, { "phase": "P1", "reduction": 0.05, "range": [0.0, 0.10] } ],
+      "evidence": "Out-of-pocket fees and travel costs delay investigations and discourage screening (AstraZeneca briefing, slide 5); >50 km associated with worse lung cancer outcomes (S18).",
+      "source_ids": ["S27", "S18"], "confidence": "low",
+      "roadmap_actions": [ { "id": "3.3", "page": 63 } ],
+      "cost_note": "Kela travel reimbursement + county transport coordination.", "effort": "low"
+    },
+    {
+      "id": "min_dataset", "label": "Minimum dataset: symptom, referral and treatment dates + entry route + education",
+      "effects": [ { "type": "uncertainty", "cv_multiplier": 0.6 } ],
+      "evidence": "Strategy p.30: symptom-to-diagnosis not collected systematically; stage recorded for only ~40% of cases.",
+      "source_ids": ["S19"], "confidence": "high",
+      "roadmap_actions": [ { "id": "3.1.4", "page": 58 }, { "id": "3.2.1", "page": 59 } ],
+      "cost_note": "Low.", "effort": "low"
+    }
+  ],
+  "simulation": { "n_patients_per_region": 5000, "seed": 42, "percentiles": [10, 50, 90] }
+}

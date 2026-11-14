@@ -1,0 +1,30 @@
+// Short labels for source ids (full list: docs/05_fuentes_y_evidencia.md).
+export const SOURCES: Record<string, { label: string; url?: string }> = {
+  S01: { label: 'Kuittinen study via Yle MOT 2025 (preliminary)', url: 'https://yle.fi/a/74-20251023' },
+  S02: { label: 'Khalife et al., Acta Oncologica 2025 (Nordic survey)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC12160590/' },
+  S03: { label: 'National cancer strategy roadmap 2026–2031 (FICAN/STM)' },
+  S04: { label: 'Oulu single-centre study, Acta Oncologica 2019', url: 'https://pubmed.ncbi.nlm.nih.gov/30938249/' },
+  S05: { label: 'TYKS lung cancer access times 2024–25', url: 'https://www.tyks.fi/potilaille-ja-laheisille/hoidot-ja-tutkimukset/syopa/keuhkosyovan-hoitoonpaasyajat' },
+  S06: { label: 'Helsedirektoratet, Norway lung cancer pathway times', url: 'https://www.helsedirektoratet.no/nasjonale-forlop/lungekreft/forlopstider-i-pakkeforlop-for-lungekreft' },
+  S07: { label: 'RCC Sweden, SVF lung cancer', url: 'https://kunskapsbanken.cancercentrum.se/diagnoser/lungcancer/vardforlopp/' },
+  S08: { label: 'Finnish Cancer Registry lung cancer report (via Verkkouutiset 2024)' },
+  S09: { label: 'National lung cancer quality registry project 2019–2023' },
+  S10: { label: 'THL primary care waiting times 2025 (Helsinki Times)' },
+  S11: { label: 'THL Sotkanet: waiting times by wellbeing county', url: 'https://sotkanet.fi' },
+  S12: { label: 'Statistics Finland municipalities 2026 + StatFin population 2025', url: 'https://stat.fi' },
+  S13: { label: 'THL Sotkanet 3195: tertiary education by county', url: 'https://sotkanet.fi' },
+  S14: { label: 'Danish Cancer Patient Pathways (BMC Cancer 2017)', url: 'https://link.springer.com/article/10.1186/s12885-017-3623-8' },
+  S15: { label: 'e-consultation systematic review 2016', url: 'https://pubmed.ncbi.nlm.nih.gov/27075028/' },
+  S16: { label: 'Nurse navigator studies (Zibrik 2016; Kunos 2015)' },
+  S17: { label: 'Danish RCT: direct CT access from primary care (2015)', url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4660800/' },
+  S18: { label: 'Paakkola et al., Acta Oncologica 2024 (distance, Vaasa)', url: 'https://medicaljournalssweden.se/actaoncologica/article/view/27507' },
+  S19: { label: 'National Cancer Strategy 2026–2035 (STM)' },
+  S23: { label: 'NORDCAN', url: 'https://nordcan.iarc.fr' },
+  S24: { label: 'Wales lung cancer pathway simulation (2021)', url: 'https://tlcr.amegroups.org/article/view/50482/html' },
+  S25: { label: 'Kuitunen et al., Cancer Medicine 2026 (DLBCL, Finland)' },
+  S26: { label: 'Zai et al., BMJ Public Health 2025 (Finland, N=469,522)' },
+  S27: { label: 'AstraZeneca briefing: Equitable Cancer Care (Kuitunen, Pohde)' },
+  S28: { label: 'Nordic SES review, Acta Oncologica 2022; Tokola 2025' },
+};
+
+export const ROADMAP_PAGE_NOTE = 'National cancer strategy implementation roadmap 2026–2031';

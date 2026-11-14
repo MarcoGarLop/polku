@@ -1,0 +1,18 @@
+{
+  "name": "polku",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Polku — equity-focused digital twin of the lung cancer pathway in Finland's wellbeing services counties",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check:gemini": "node --env-file=.env scripts/check-gemini.mjs",
+    "dev:server": "npm run start -w @polku/server",
+    "dev:web": "npm run dev -w @polku/web",
+    "data": "node scripts/fetch-data.mjs && node scripts/build-data.mjs"
+  }
+}
